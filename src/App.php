@@ -86,7 +86,7 @@ class App
     public function register(string $name, ?string $namespace = null): void
     {
         if (v::nullType()->validate($namespace)) {
-            $namespace = "\\Copy2Cloud\\Server\\Rest\\";
+            $namespace = "\\Copy2Cloud\\Rest\\";
         }
 
         $className = $namespace . $name;
