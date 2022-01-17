@@ -1,0 +1,36 @@
+version: '3.3'
+services:
+  redis:
+    image: 'redis:alpine'
+    container_name: copy2cloud-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    networks:
+      - copy2cloud
+    ports:
+      - ${REDIS_PORT}:6379
+
+  webserver:
+    image: 'nginx:alpine'
+    container_name: copy2cloud-webserver
+    working_dir: /copy2cloud
+    networks:
+      - copy2cloud
+    volumes:
+      - '.:/copy2cloud'
+      - './.docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf'
+    ports:
+      - ${WEBSERVER_PORT}:80
+
+  php-fpm:
+    build: .docker/php-fpm
+    container_name: copy2cloud-php
+    working_dir: /copy2cloud
+    networks:
+      - copy2cloud
+    volumes:
+      - '.:/copy2cloud'
+      - './.docker/php-fpm/php-ini-overrides.ini:/etc/php/8.1/fpm/conf.d/99-overrides.ini'
+
+networks:
+  copy2cloud:
+    driver: bridge

@@ -1,0 +1,19 @@
+{
+  "test_key": "test_val",
+  "1": "one",
+  "2nd": "second",
+  "parent_key": {
+    "0": "child_item",
+    "another_child_item": [
+      1,
+      "two"
+    ],
+    "special_characters": [
+      "\n",
+      "$",
+      "\"",
+      "|",
+      "'"
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+/.idea/
+/vendor/
+/.phpunit.result.cache
+/storage/config/c2c.conf
+/storage/logs/*
+!/storage/logs/.gitkeep
+.env
