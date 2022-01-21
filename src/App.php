@@ -33,6 +33,8 @@ class App
      */
     public function registerRoutes()
     {
+        $this->register('Contents');
+
         $this->register('Defaults');
     }
 

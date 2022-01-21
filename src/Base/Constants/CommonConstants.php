@@ -13,4 +13,5 @@ class CommonConstants
         'token',
         'authorization',
     ];
+    const NAMESPACE_CONTENTS = 'contents';
 }
