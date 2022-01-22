@@ -4,6 +4,7 @@ namespace Copy2Cloud\Base;
 
 use Copy2Cloud\Base\Constants\CommonConstants;
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
+use Copy2Cloud\Base\Exceptions\UnexpectedValueException;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Respect\Validation\Validator as v;
@@ -28,7 +29,7 @@ class Log extends Logger
     {
         $this->config = Container::getConfig();
 
-        parent::__construct(APP_NAME ?? 'copy2cloud');
+        parent::__construct(defined('APP_NAME') ? APP_NAME : 'copy2cloud');
 
         $streamHandler = new StreamHandler($this->_getStorePath(), $this->_getLevel());
 
@@ -79,7 +80,7 @@ class Log extends Logger
     {
         self::$requestResponse = array_merge(self::$requestResponse, $data);
         if ($write) {
-            Container::getLog()->info('', self::_mask(self::$requestResponse));
+            Container::getLog()->info('', self::mask(self::$requestResponse));
         }
 
         return self::$requestResponse;
@@ -87,24 +88,35 @@ class Log extends Logger
 
     /**
      * @param mixed $data
-     * @return array
+     * @return mixed
      * @throws MaintenanceModeException
      */
-    public static function _mask(mixed $data): array
+    public static function mask(mixed $data): mixed
     {
         try {
             $json = $data;
+            $returnAsArray = false;
             if (v::arrayType()->validate($data)) {
+                $returnAsArray = true;
                 $json = Json::encode($data);
+            }
+
+            if (!v::stringType()->validate($json)) {
+                throw new UnexpectedValueException('Invalid data type to mask!', ['type' => gettype($json)]);
             }
 
             $maskedFields = implode('|', CommonConstants::MASKED_FIELDS);
             $json = preg_replace('/"(' . $maskedFields . ')":"(.*?)"/i', '"$1":"****"', $json);
+            $json = preg_replace('/"(' . $maskedFields . ')":(\d+)/i', '"$1":"****"', $json);
             $json = preg_replace('/"(' . $maskedFields . ')":\["(.*?)"]/i', '"$1":["****"]', $json);
+
+            if (!$returnAsArray) {
+                return $json;
+            }
 
             return Json::decode($json);
         } catch (Throwable $th) {
-            Container::getLog()->error('Log line could not masked!', [
+            Container::getLog()->error('Data could not mask!', [
                 'exception' => [
                     'message' => $th->getMessage(),
                     'file' => $th->getFile(),

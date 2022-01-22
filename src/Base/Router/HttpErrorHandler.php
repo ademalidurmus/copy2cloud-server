@@ -47,8 +47,8 @@ class HttpErrorHandler extends ErrorHandler
         $response = $this->responseFactory->createResponse();
         $response->getBody()->write(Json::encode($body));
         $response = $response->withHeader('Content-Type', 'application/json; charset=UTF-8');
-        $response = $response->withHeader('X-Powered-By', APP_NAME);
-        $response = $response->withHeader('X-App-Version', APP_VERSION);
+        $response = $response->withHeader('X-Powered-By', defined('APP_NAME') ? APP_NAME : 'copy2cloud');
+        $response = $response->withHeader('X-App-Version', defined('APP_VERSION') ? APP_VERSION : '0.0.1');
         $response = $response->withHeader('X-Status', $statusCode);
         $response = $response->withHeader('X-Message', $message);
         $response = $response->withHeader('X-Identifier', $identifier);

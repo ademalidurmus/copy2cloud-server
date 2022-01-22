@@ -4,7 +4,6 @@ namespace Copy2Cloud\Rest;
 
 use Copy2Cloud\Base\Constants\ErrorCodes;
 use Copy2Cloud\Base\Constants\HttpStatusCodes;
-use Copy2Cloud\Base\Container;
 use Copy2Cloud\Base\Exceptions\NotFoundException;
 use Psr\Http\Message\ResponseInterface;
 use Slim\Http\Response;

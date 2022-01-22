@@ -3,9 +3,7 @@
 namespace Copy2Cloud\Base\Router;
 
 use Copy2Cloud\Base\Constants\CommonConstants;
-use Copy2Cloud\Base\Container;
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
-use Copy2Cloud\Base\Json;
 use Copy2Cloud\Base\Log;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
@@ -50,14 +48,14 @@ class AfterMiddleware
                     break;
             }
         }
-        $response = $response->withHeader('X-Powered-By', APP_NAME);
-        $response = $response->withHeader('X-App-Version', APP_VERSION);
+        $response = $response->withHeader('X-Powered-By', defined('APP_NAME') ? APP_NAME : 'copy2cloud');
+        $response = $response->withHeader('X-App-Version', defined('APP_VERSION') ? APP_VERSION : '0.0.1');
         $response = $response->withHeader('X-Status', $response->getStatusCode());
 
         Log::requestResponseLog(
             [
                 CommonConstants::RESPONSE => [
-                    'headers' => (array)$response->getHeaders(),
+                    'headers' => $response->getHeaders(),
                     // 'body' => Container::getLog()->isDebugEnabled() ? Json::decode($response->getBody()->getContents(), true) : [],
                 ]
             ],
