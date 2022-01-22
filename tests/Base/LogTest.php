@@ -7,6 +7,7 @@ use Copy2Cloud\Base\Container;
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
 use Copy2Cloud\Base\Log;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 
 class LogTest extends TestCase
 {
@@ -16,15 +17,7 @@ class LogTest extends TestCase
      */
     public function testLog()
     {
-        $config = new Config();
-        $config->log = [
-            'filename' => 'php://output',
-            'level' => 'debug',
-        ];
-        Container::set(
-            Container::RESOURCE_CONFIG,
-            $config
-        );
+        $this->_setConfig();
 
         $log = new Log();
         $this->expectOutputRegex('/\[(?P<date>.*)\]\s(?<channel>.*)\.(?<severity>.*):\s(?<message>.*)\s(\[|\{)(?<context>.*)(\]|\})\s\[(?<extra>.*)\]/');
@@ -59,11 +52,48 @@ class LogTest extends TestCase
             'access_token' => 'test token',
             'test_key' => 'test value',
         ];
+
         $maskedData = Log::mask($data);
+
         $this->assertArrayHasKey('password', $maskedData);
         $this->assertEquals('****', $maskedData['password']);
         $this->assertEquals('****', $maskedData['access_token']);
         $this->assertEquals('****', $maskedData['Authorization'][0]);
         $this->assertEquals('test value', $maskedData['test_key']);
+    }
+
+    /**
+     * @return void
+     * @throws MaintenanceModeException
+     */
+    public function testMaskError()
+    {
+        $this->_setConfig();
+
+        $stdClass = new stdClass();
+        $stdClass->test = 'test value';
+        $stdClass->password = 123456;
+
+        $this->expectOutputRegex('/\[(?P<date>.*)\]\s(?<channel>.*)\.(ERROR):\s(Data could not mask!)\s(\[|\{)(?<context>.*)(\]|\})\s\[(?<extra>.*)\]/');
+        Log::mask($stdClass);
+    }
+
+    /**
+     * @return void
+     */
+    private function _setConfig()
+    {
+        $config = new Config();
+        $config->log = [
+            'filename' => 'php://output',
+            'level' => 'debug',
+        ];
+        Container::set(
+            Container::RESOURCE_CONFIG,
+            $config
+        );
+
+        $log = new Log();
+        Container::set(Container::RESOURCE_LOG, $log);
     }
 }

@@ -4,6 +4,7 @@ namespace Copy2Cloud\Base;
 
 use Copy2Cloud\Base\Constants\CommonConstants;
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
+use Copy2Cloud\Base\Exceptions\UnexpectedValueException;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Respect\Validation\Validator as v;
@@ -100,6 +101,10 @@ class Log extends Logger
                 $json = Json::encode($data);
             }
 
+            if (!v::stringType()->validate($json)) {
+                throw new UnexpectedValueException('Invalid data type to mask!', ['type' => gettype($json)]);
+            }
+
             $maskedFields = implode('|', CommonConstants::MASKED_FIELDS);
             $json = preg_replace('/"(' . $maskedFields . ')":"(.*?)"/i', '"$1":"****"', $json);
             $json = preg_replace('/"(' . $maskedFields . ')":(\d+)/i', '"$1":"****"', $json);
@@ -111,7 +116,7 @@ class Log extends Logger
 
             return Json::decode($json);
         } catch (Throwable $th) {
-            Container::getLog()->error('Log line could not masked!', [
+            Container::getLog()->error('Data could not mask!', [
                 'exception' => [
                     'message' => $th->getMessage(),
                     'file' => $th->getFile(),
