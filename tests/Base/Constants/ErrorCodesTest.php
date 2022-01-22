@@ -11,6 +11,7 @@ class ErrorCodesTest extends TestCase
     {
         $reflectionClass = new ReflectionClass('Copy2Cloud\Base\Constants\ErrorCodes');
         $constantList = $reflectionClass->getConstants();
+
         $errorCodeValuesCount = count(array_unique(array_values($constantList)));
         $errorCodesCount = count($constantList);
         $this->assertEquals($errorCodeValuesCount, $errorCodesCount, 'Error code values must be unique!');
