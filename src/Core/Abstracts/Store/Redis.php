@@ -2,14 +2,9 @@
 
 namespace Copy2Cloud\Core\Abstracts\Store;
 
-use Copy2Cloud\Base\Constants\CommonConstants;
 use Copy2Cloud\Base\Container;
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
-use Defuse\Crypto\Crypto;
-use Defuse\Crypto\Exception\EnvironmentIsBrokenException;
-use Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException;
 use Predis\Client;
-use Respect\Validation\Validator as v;
 
 abstract class Redis
 {
@@ -37,6 +32,14 @@ abstract class Redis
     }
 
     /**
+     * @return string
+     */
+    public function getPrefix(): string
+    {
+        return $this->prefix;
+    }
+
+    /**
      * @param string $namespace
      * @return $this
      */
@@ -47,17 +50,33 @@ abstract class Redis
     }
 
     /**
+     * @return string
+     */
+    public function getNamespace(): string
+    {
+        return $this->namespace;
+    }
+
+    /**
      * @param string $key
      * @return string
      */
     public function getHash(string $key): string
     {
         $hash = sprintf(
-            '%s:%s:%s',
+            '%s:%s',
             $this->prefix,
-            $this->namespace,
+            $this->namespace
+        );
+
+        $hash = trim($hash, ':');
+
+        $hash = sprintf(
+            '%s:%s',
+            $hash,
             $key
         );
+
         return trim($hash, ':');
     }
 
@@ -78,62 +97,5 @@ abstract class Redis
     public function isHashExists(string $key, string $field): bool
     {
         return $this->connection->hexists($this->getHash($key), $field) > 0;
-    }
-
-    /**
-     * @param array $data
-     * @param string $secret
-     * @return array
-     * @throws EnvironmentIsBrokenException
-     */
-    public function encryptContext(array $data, string $secret): array
-    {
-        if (!v::key('secret', v::trueVal())->validate($data)) {
-            return $data;
-        }
-
-        switch ($this->namespace) {
-            case CommonConstants::NAMESPACE_CONTENTS:
-                foreach (['content', 'attributes', 'acl'] as $field) {
-                    if (v::key($field)->validate($data)) {
-                        $data[$field] = Crypto::encryptWithPassword(serialize($data[$field]), $secret);
-                    }
-                }
-                break;
-
-            default:
-                return $data;
-        }
-
-        return $data;
-    }
-
-    /**
-     * @param array $data
-     * @param string $secret
-     * @return array
-     * @throws EnvironmentIsBrokenException
-     * @throws WrongKeyOrModifiedCiphertextException
-     */
-    public function decryptContext(array $data, string $secret): array
-    {
-        if (!v::key('secret', v::trueVal())->validate($data)) {
-            return $data;
-        }
-
-        switch ($this->namespace) {
-            case CommonConstants::NAMESPACE_CONTENTS:
-                foreach (['content', 'attributes', 'acl'] as $field) {
-                    if (v::key($field)->validate($data)) {
-                        $data[$field] = unserialize(Crypto::decryptWithPassword($data[$field], $secret));
-                    }
-                }
-                break;
-
-            default:
-                return $data;
-        }
-
-        return $data;
     }
 }

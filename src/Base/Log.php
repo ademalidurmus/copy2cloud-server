@@ -28,7 +28,7 @@ class Log extends Logger
     {
         $this->config = Container::getConfig();
 
-        parent::__construct(APP_NAME ?? 'copy2cloud');
+        parent::__construct(defined('APP_NAME') ? APP_NAME : 'copy2cloud');
 
         $streamHandler = new StreamHandler($this->_getStorePath(), $this->_getLevel());
 
