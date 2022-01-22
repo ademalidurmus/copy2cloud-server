@@ -79,7 +79,7 @@ class Log extends Logger
     {
         self::$requestResponse = array_merge(self::$requestResponse, $data);
         if ($write) {
-            Container::getLog()->info('', self::_mask(self::$requestResponse));
+            Container::getLog()->info('', self::mask(self::$requestResponse));
         }
 
         return self::$requestResponse;
@@ -87,20 +87,27 @@ class Log extends Logger
 
     /**
      * @param mixed $data
-     * @return array
+     * @return mixed
      * @throws MaintenanceModeException
      */
-    public static function _mask(mixed $data): array
+    public static function mask(mixed $data): mixed
     {
         try {
             $json = $data;
+            $returnAsArray = false;
             if (v::arrayType()->validate($data)) {
+                $returnAsArray = true;
                 $json = Json::encode($data);
             }
 
             $maskedFields = implode('|', CommonConstants::MASKED_FIELDS);
             $json = preg_replace('/"(' . $maskedFields . ')":"(.*?)"/i', '"$1":"****"', $json);
+            $json = preg_replace('/"(' . $maskedFields . ')":(\d+)/i', '"$1":"****"', $json);
             $json = preg_replace('/"(' . $maskedFields . ')":\["(.*?)"]/i', '"$1":["****"]', $json);
+
+            if (!$returnAsArray) {
+                return $json;
+            }
 
             return Json::decode($json);
         } catch (Throwable $th) {
