@@ -2,6 +2,7 @@
 
 namespace Copy2Cloud\Tests\Base\Utilities;
 
+use Copy2Cloud\Base\Constants\CommonConstants;
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
 use Copy2Cloud\Base\Utilities\Config;
 use Copy2Cloud\Base\Utilities\Container;
@@ -76,6 +77,32 @@ class LogTest extends TestCase
 
         $this->expectOutputRegex('/\[(?P<date>.*)\]\s(?<channel>.*)\.(ERROR):\s(Data could not mask!)\s(\[|\{)(?<context>.*)(\]|\})\s\[(?<extra>.*)\]/');
         Log::mask($stdClass);
+    }
+
+    /**
+     * @return void
+     * @throws MaintenanceModeException
+     */
+    public function testRequestResponseLog()
+    {
+        $this->_setConfig();
+
+        $data = Log::requestResponseLog([
+            CommonConstants::REQUEST => [
+                'test_key' => 'test_val'
+            ],
+        ]);
+
+        $this->assertArrayHasKey(CommonConstants::REQUEST, $data);
+
+        $this->expectOutputRegex('/\[(?P<date>.*)\]\s(?<channel>.*)\.(INFO):\s(?<message>.*)\s(\[|\{)(?<context>.*)(\]|\})\s\[(?<extra>.*)\]/');
+        $data = Log::requestResponseLog([
+            CommonConstants::RESPONSE => [
+                'test_key' => 'test_val'
+            ],
+        ], true);
+        $this->assertArrayHasKey(CommonConstants::REQUEST, $data);
+        $this->assertArrayHasKey(CommonConstants::RESPONSE, $data);
     }
 
     /**
