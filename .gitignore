@@ -3,6 +3,6 @@
 /.phpunit.result.cache
 /storage/config/c2c.conf
 /storage/logs/*
-/storage/test_coverage/*
+/tests/.coverage
 !/storage/**/.gitkeep
 .env

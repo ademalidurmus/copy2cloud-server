@@ -2,8 +2,8 @@
 
 namespace Copy2Cloud\Core\Abstracts\Store;
 
-use Copy2Cloud\Base\Container;
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
+use Copy2Cloud\Base\Utilities\Container;
 use Predis\Client;
 
 abstract class Redis

@@ -1,9 +1,9 @@
 <?php
 
-namespace Copy2Cloud\Tests\Base;
+namespace Copy2Cloud\Tests\Base\Utilities;
 
-use Copy2Cloud\Base\Crud;
 use Copy2Cloud\Base\Exceptions\UnexpectedValueException;
+use Copy2Cloud\Base\Utilities\Crud;
 use PHPUnit\Framework\TestCase;
 use Respect\Validation\Validator as v;
 

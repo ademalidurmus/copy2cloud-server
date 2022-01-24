@@ -1,11 +1,11 @@
 <?php
 
-namespace Copy2Cloud\Tests\Base;
+namespace Copy2Cloud\Tests\Base\Utilities;
 
-use Copy2Cloud\Base\Config;
-use Copy2Cloud\Base\Container;
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
-use Copy2Cloud\Base\Log;
+use Copy2Cloud\Base\Utilities\Config;
+use Copy2Cloud\Base\Utilities\Container;
+use Copy2Cloud\Base\Utilities\Log;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 

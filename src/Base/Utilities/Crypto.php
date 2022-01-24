@@ -1,6 +1,6 @@
 <?php
 
-namespace Copy2Cloud\Base;
+namespace Copy2Cloud\Base\Utilities;
 
 use Defuse\Crypto\Crypto as DefuseCrypto;
 use Defuse\Crypto\Exception\EnvironmentIsBrokenException;

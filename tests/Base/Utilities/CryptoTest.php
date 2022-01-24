@@ -1,9 +1,9 @@
 <?php
 
-namespace Copy2Cloud\Tests\Base;
+namespace Copy2Cloud\Tests\Base\Utilities;
 
-use Copy2Cloud\Base\Crypto;
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
+use Copy2Cloud\Base\Utilities\Crypto;
 use Defuse\Crypto\Exception\EnvironmentIsBrokenException;
 use Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException;
 use PHPUnit\Framework\TestCase;

@@ -3,7 +3,6 @@
 namespace Copy2Cloud\Rest;
 
 use Copy2Cloud\Base\Constants\HttpStatusCodes;
-use Copy2Cloud\Base\Container;
 use Psr\Http\Message\ResponseInterface;
 use Slim\Http\Response;
 use Slim\Http\ServerRequest as Request;

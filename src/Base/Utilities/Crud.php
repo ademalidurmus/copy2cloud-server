@@ -1,6 +1,6 @@
 <?php
 
-namespace Copy2Cloud\Base;
+namespace Copy2Cloud\Base\Utilities;
 
 class Crud
 {
@@ -13,25 +13,21 @@ class Crud
 
     /**
      * @param string $name
-     * @return null
+     * @return null|mixed
      */
-    public function __get(string $name)
+    public function __get(string $name): mixed
     {
-        if (isset($this->{$name})) {
-            return $this->{$name};
-        }
-
-        return $this->_defaultValue;
+        return $this->{$name} ?? $this->_defaultValue;
     }
 
     /**
      * @param string $name
      * @param mixed $value
-     * @return mixed
+     * @return void
      */
-    public function __set(string $name, mixed $value)
+    public function __set(string $name, mixed $value): void
     {
-        return $this->{$name} = $this->checkValue($name, $value);
+        $this->{$name} = $this->checkValue($name, $value);
     }
 
     /**

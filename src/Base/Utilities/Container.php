@@ -1,6 +1,6 @@
 <?php
 
-namespace Copy2Cloud\Base;
+namespace Copy2Cloud\Base\Utilities;
 
 use Copy2Cloud\Base\Constants\ErrorCodes;
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;

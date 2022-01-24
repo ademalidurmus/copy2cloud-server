@@ -3,8 +3,8 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Copy2Cloud\App;
-use Copy2Cloud\Base\Config;
-use Copy2Cloud\Base\Container;
+use Copy2Cloud\Base\Utilities\Config;
+use Copy2Cloud\Base\Utilities\Container;
 
 try {
     define('APP_VERSION', '0.0.1');

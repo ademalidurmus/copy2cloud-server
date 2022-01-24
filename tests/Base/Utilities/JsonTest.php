@@ -1,8 +1,8 @@
 <?php
 
-namespace Copy2Cloud\Tests\Base;
+namespace Copy2Cloud\Tests\Base\Utilities;
 
-use Copy2Cloud\Base\Json;
+use Copy2Cloud\Base\Utilities\Json;
 use PHPUnit\Framework\TestCase;
 
 final class JsonTest extends TestCase
@@ -18,7 +18,7 @@ final class JsonTest extends TestCase
         ],
     ];
 
-    const MOCK_JSON_FILE_PATH = __DIR__ . '/../.mock/base_json_encoded_data.json';
+    const MOCK_JSON_FILE_PATH = __DIR__ . '/../../.mock/base_json_encoded_data.json';
 
     public function testEncode()
     {

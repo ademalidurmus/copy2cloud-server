@@ -1,6 +1,6 @@
 <?php
 
-namespace Copy2Cloud\Base;
+namespace Copy2Cloud\Base\Utilities;
 
 use Respect\Validation\Validator as v;
 

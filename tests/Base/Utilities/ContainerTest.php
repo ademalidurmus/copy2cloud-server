@@ -1,16 +1,33 @@
 <?php
 
-namespace Copy2Cloud\Tests\Base;
+namespace Copy2Cloud\Tests\Base\Utilities;
 
-use Copy2Cloud\Base\Config;
-use Copy2Cloud\Base\Container;
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
+use Copy2Cloud\Base\Utilities\Config;
+use Copy2Cloud\Base\Utilities\Container;
 use PHPUnit\Framework\TestCase;
 use Predis\Client;
 use Ramsey\Uuid\Uuid;
 
 final class ContainerTest extends TestCase
 {
+    /**
+     * @return void
+     * @throws MaintenanceModeException
+     */
+    public function testInit()
+    {
+        $config = new Config();
+        $config->general = [
+            'test' => true,
+        ];
+
+        Container::init($config);
+
+        $config = Container::getConfig();
+        $this->assertObjectHasAttribute('general', $config);
+    }
+
     /**
      * @return void
      * @throws MaintenanceModeException
@@ -22,6 +39,15 @@ final class ContainerTest extends TestCase
 
         $data = Container::get('test');
         $this->assertEquals('test value', $data);
+    }
+
+    /**
+     * @return void
+     */
+    public function testSetError()
+    {
+        $data = Container::set('', 'test value');
+        $this->assertFalse($data);
     }
 
     /**
@@ -74,7 +100,7 @@ final class ContainerTest extends TestCase
         );
 
         $config = Container::getConfig();
-        $this->assertInstanceOf('Copy2Cloud\Base\Config', $config);
+        $this->assertInstanceOf('Copy2Cloud\Base\Utilities\Config', $config);
     }
 
     /**
@@ -84,6 +110,6 @@ final class ContainerTest extends TestCase
     public function testGetLog()
     {
         $config = Container::getLog();
-        $this->assertInstanceOf('Copy2Cloud\Base\Log', $config);
+        $this->assertInstanceOf('Copy2Cloud\Base\Utilities\Log', $config);
     }
 }

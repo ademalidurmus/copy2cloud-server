@@ -2,8 +2,8 @@
 
 namespace Copy2Cloud\Base\Exceptions;
 
-use Exception;
 use Copy2Cloud\Base\Constants\HttpStatusCodes;
+use Exception;
 
 class StoreRedisException extends DefaultException
 {

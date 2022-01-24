@@ -1,6 +1,6 @@
 <?php
 
-namespace Copy2Cloud\Base;
+namespace Copy2Cloud\Base\Utilities;
 
 use Copy2Cloud\Base\Constants\CommonConstants;
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
@@ -9,6 +9,7 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Respect\Validation\Validator as v;
 use Throwable;
+use const APP_NAME;
 
 class Log extends Logger
 {

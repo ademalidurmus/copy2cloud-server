@@ -3,12 +3,12 @@
 namespace Copy2Cloud;
 
 use Copy2Cloud\Base\Constants\ErrorCodes;
-use Copy2Cloud\Base\Container;
 use Copy2Cloud\Base\Exceptions\InvalidArgumentException;
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
 use Copy2Cloud\Base\Router\AfterMiddleware;
 use Copy2Cloud\Base\Router\BeforeMiddleware;
 use Copy2Cloud\Base\Router\HttpErrorHandler;
+use Copy2Cloud\Base\Utilities\Container;
 use Respect\Validation\Validator as v;
 use Slim\App as SlimApp;
 use Slim\Factory\AppFactory;
