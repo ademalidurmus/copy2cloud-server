@@ -21,11 +21,26 @@ final class ContainerTest extends TestCase
         $config->general = [
             'test' => true,
         ];
+        $config->log = [
+            'filename' => 'php://output',
+            'level' => 'debug',
+        ];
 
         Container::init($config);
 
         $config = Container::getConfig();
         $this->assertObjectHasAttribute('general', $config);
+    }
+
+    /**
+     * @depends testInit
+     * @return void
+     */
+    public function testGetRedisError()
+    {
+        $this->expectOutputRegex('/\[(?P<date>.*)\]\s(?<channel>.*)\.(CRITICAL):\s(Redis connection failed!)\s(\[|\{)(?<context>.*)(\]|\})\s\[(?<extra>.*)\]/');
+        $this->expectException(MaintenanceModeException::class);
+        Container::getRedis();
     }
 
     /**

@@ -44,7 +44,6 @@ class CryptoTest extends TestCase
     /**
      * @return void
      * @throws EnvironmentIsBrokenException
-     * @throws MaintenanceModeException
      * @throws WrongKeyOrModifiedCiphertextException
      */
     public function testDecryptContext()

@@ -113,7 +113,7 @@ class Container
             }
             throw new StoreRedisException('Missing redis configurations!');
         } catch (Throwable $th) {
-            Container::getLog()->alert('Redis connection failed!', ['body' => ['message' => $th->getMessage()]]);
+            Container::getLog()->critical('Redis connection failed!', ['body' => ['message' => $th->getMessage()]]);
             throw new MaintenanceModeException(
                 'This server is in maintenance mode. Refresh this page in some minutes.',
                 ErrorCodes::MAINTENANCE_MODE

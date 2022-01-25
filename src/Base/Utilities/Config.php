@@ -9,7 +9,7 @@ use Respect\Validation\Validator as v;
  * @property null $redis
  * @property null $log
  */
-class Config extends Crud
+class Config extends PropertyAccessor
 {
     /**
      * @var Config

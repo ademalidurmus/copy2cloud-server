@@ -2,7 +2,7 @@
 
 namespace Copy2Cloud\Base\Utilities;
 
-class Crud
+class PropertyAccessor
 {
     private mixed $_defaultValue;
 

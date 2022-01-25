@@ -3,11 +3,11 @@
 namespace Copy2Cloud\Tests\Base\Utilities;
 
 use Copy2Cloud\Base\Exceptions\UnexpectedValueException;
-use Copy2Cloud\Base\Utilities\Crud;
+use Copy2Cloud\Base\Utilities\PropertyAccessor;
 use PHPUnit\Framework\TestCase;
 use Respect\Validation\Validator as v;
 
-class MockObject extends Crud
+class MockObject extends PropertyAccessor
 {
     /**
      * @param string $key
@@ -39,33 +39,33 @@ final class CrudTest extends TestCase
 {
     public function testGetterWithDefaultValue()
     {
-        $crud = new Crud('my_default_value');
+        $propertyAccessor = new PropertyAccessor('my_default_value');
 
-        $this->assertObjectNotHasAttribute('test', $crud);
-        $this->assertEquals('my_default_value', $crud->test);
+        $this->assertObjectNotHasAttribute('test', $propertyAccessor);
+        $this->assertEquals('my_default_value', $propertyAccessor->test);
     }
 
     public function testGetterIsNull()
     {
-        $crud = new Crud();
+        $propertyAccessor = new PropertyAccessor();
 
-        $this->assertObjectNotHasAttribute('test', $crud);
-        $this->assertNull($crud->test);
+        $this->assertObjectNotHasAttribute('test', $propertyAccessor);
+        $this->assertNull($propertyAccessor->test);
     }
 
     public function testSetterGetter()
     {
-        $crud = new Crud();
-        $crud->testKey = 'test value';
+        $propertyAccessor = new PropertyAccessor();
+        $propertyAccessor->testKey = 'test value';
 
-        $this->assertObjectHasAttribute('testKey', $crud);
-        $this->assertEquals('test value', $crud->testKey);
+        $this->assertObjectHasAttribute('testKey', $propertyAccessor);
+        $this->assertEquals('test value', $propertyAccessor->testKey);
 
-        $crud->testKey = null;
-        $this->assertObjectHasAttribute('testKey', $crud);
+        $propertyAccessor->testKey = null;
+        $this->assertObjectHasAttribute('testKey', $propertyAccessor);
 
-        unset($crud->testKey);
-        $this->assertObjectNotHasAttribute('testKey', $crud);
+        unset($propertyAccessor->testKey);
+        $this->assertObjectNotHasAttribute('testKey', $propertyAccessor);
     }
 
     public function testCrudCheckValue()
