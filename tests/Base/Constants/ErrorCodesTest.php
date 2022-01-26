@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Copy2Cloud\Tests\Base\Constants;
 
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
-class ErrorCodesTest extends TestCase
+final class ErrorCodesTest extends TestCase
 {
     public function testErrorCodesAreUnique()
     {

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Copy2Cloud\Base\Router;
 
 use Copy2Cloud\Base\Constants\CommonConstants;
@@ -13,8 +15,6 @@ use Slim\Http\ServerRequest;
 class AfterMiddleware
 {
     /**
-     * Example middleware invokable class
-     *
      * @param ServerRequest|Request $request PSR-7 request
      * @param RequestHandler $handler PSR-15 request handler
      *

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Copy2Cloud\Tests;
 
 use Copy2Cloud\App;

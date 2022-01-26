@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Copy2Cloud\Tests\Base\Utilities;
 
 use Copy2Cloud\Base\Constants\CommonConstants;
@@ -10,7 +12,7 @@ use Copy2Cloud\Base\Utilities\Log;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
-class LogTest extends TestCase
+final class LogTest extends TestCase
 {
     /**
      * @return void

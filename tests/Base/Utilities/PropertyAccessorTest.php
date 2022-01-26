@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Copy2Cloud\Tests\Base\Utilities;
 
 use Copy2Cloud\Base\Exceptions\UnexpectedValueException;
@@ -35,7 +37,7 @@ class MockObject extends PropertyAccessor
     }
 }
 
-final class CrudTest extends TestCase
+final class PropertyAccessorTest extends TestCase
 {
     public function testGetterWithDefaultValue()
     {

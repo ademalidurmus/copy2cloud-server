@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Copy2Cloud\Tests\Core\Abstracts\Store;
 
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
-use Copy2Cloud\Core\Abstracts\Store\Redis;
+use Copy2Cloud\Core\Abstracts\StoreRedisAbstract;
 use PHPUnit\Framework\TestCase;
 use Predis\Client;
 
-class MockAbstractRedisStore extends Redis
+class MockAbstractStoreRedisStoreAbstract extends StoreRedisAbstract
 {
 }
 
@@ -20,7 +22,7 @@ class RedisTest extends TestCase
     public function testPrefix()
     {
         $mockRedis = $this->createMock(Client::class);
-        $redisStore = new MockAbstractRedisStore($mockRedis);
+        $redisStore = new MockAbstractStoreRedisStoreAbstract($mockRedis);
 
         $this->assertEquals('C2C', $redisStore->getPrefix());
         $redisStore->setPrefix('C2C_TEST');
@@ -34,7 +36,7 @@ class RedisTest extends TestCase
     public function testNamespace()
     {
         $mockRedis = $this->createMock(Client::class);
-        $redisStore = new MockAbstractRedisStore($mockRedis);
+        $redisStore = new MockAbstractStoreRedisStoreAbstract($mockRedis);
 
         $this->assertEquals('', $redisStore->getNamespace());
         $redisStore->setNamespace('test_namespace');
@@ -48,7 +50,7 @@ class RedisTest extends TestCase
     public function testGetHash()
     {
         $mockRedis = $this->createMock(Client::class);
-        $redisStore = new MockAbstractRedisStore($mockRedis);
+        $redisStore = new MockAbstractStoreRedisStoreAbstract($mockRedis);
 
         $hash = $redisStore->getHash('test');
         $this->assertEquals('C2C:test', $hash);
@@ -71,7 +73,7 @@ class RedisTest extends TestCase
             ->method('exists')
             ->willReturn(1);
 
-        $redisStore = new MockAbstractRedisStore($mockRedis);
+        $redisStore = new MockAbstractStoreRedisStoreAbstract($mockRedis);
         $response = $redisStore->isExists('test');
         $this->assertTrue($response);
     }
@@ -90,7 +92,7 @@ class RedisTest extends TestCase
             ->method('exists')
             ->willReturn(0);
 
-        $redisStore = new MockAbstractRedisStore($mockRedis);
+        $redisStore = new MockAbstractStoreRedisStoreAbstract($mockRedis);
         $response = $redisStore->isExists('test');
         $this->assertFalse($response);
     }
@@ -109,7 +111,7 @@ class RedisTest extends TestCase
             ->method('hExists')
             ->willReturn(1);
 
-        $redisStore = new MockAbstractRedisStore($mockRedis);
+        $redisStore = new MockAbstractStoreRedisStoreAbstract($mockRedis);
         $response = $redisStore->isHashExists('hash', 'field');
         $this->assertTrue($response);
     }
@@ -128,7 +130,7 @@ class RedisTest extends TestCase
             ->method('hExists')
             ->willReturn(0);
 
-        $redisStore = new MockAbstractRedisStore($mockRedis);
+        $redisStore = new MockAbstractStoreRedisStoreAbstract($mockRedis);
         $response = $redisStore->isHashExists('hash', 'field');
         $this->assertFalse($response);
     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Copy2Cloud\Base\Utilities;
 
 use Copy2Cloud\Base\Constants\CommonConstants;

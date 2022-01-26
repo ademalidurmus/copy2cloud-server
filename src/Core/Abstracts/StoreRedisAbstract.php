@@ -1,12 +1,14 @@
 <?php
 
-namespace Copy2Cloud\Core\Abstracts\Store;
+declare(strict_types=1);
+
+namespace Copy2Cloud\Core\Abstracts;
 
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
 use Copy2Cloud\Base\Utilities\Container;
 use Predis\Client;
 
-abstract class Redis
+abstract class StoreRedisAbstract
 {
     protected ?Client $connection;
     protected string $prefix = '';
