@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Copy2Cloud\Tests;
 
 use Copy2Cloud\App;
+use Copy2Cloud\Base\Exceptions\InvalidArgumentException;
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
 use Copy2Cloud\Base\Utilities\Config;
 use Copy2Cloud\Base\Utilities\Container;
@@ -13,6 +14,9 @@ use Predis\Client;
 
 final class AppTest extends TestCase
 {
+    /**
+     * @return void
+     */
     public function testInit()
     {
         try {
@@ -81,5 +85,27 @@ final class AppTest extends TestCase
         $this->expectOutputString('{"status":200,"message":"pong"}');
         $app = new App();
         $app->run();
+    }
+
+    /**
+     * @return void
+     * @throws InvalidArgumentException
+     */
+    public function testAddRouteError()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $app = new App();
+        $app->addRoute(['TEST', '', '']);
+    }
+
+    /**
+     * @return void
+     * @throws InvalidArgumentException
+     */
+    public function testRegisterError()
+    {
+        $this->expectOutputString('');
+        $app = new App();
+        $app->register('TEST');
     }
 }
