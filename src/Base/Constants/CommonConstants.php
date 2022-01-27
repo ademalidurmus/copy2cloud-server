@@ -8,6 +8,11 @@ class CommonConstants
 {
     const REQUEST = 'REQUEST';
     const RESPONSE = 'RESPONSE';
+    const CREATE = 'create';
+    const READ = 'read';
+    const UPDATE = 'update';
+    const DELETE = 'delete';
+    const SEARCH = 'search';
     const MASKED_FIELDS = [
         'pass',
         'password',

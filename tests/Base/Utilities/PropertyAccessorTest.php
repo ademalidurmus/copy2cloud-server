@@ -92,4 +92,72 @@ final class PropertyAccessorTest extends TestCase
         ];
         $this->assertArrayHasKey('test_key', $mockObject->testAnotherKey);
     }
+
+    public function testModifyAllowedArguments()
+    {
+        $mockObject = new MockObject([]);
+        $getAllowedArguments = $mockObject->getAllowedArguments();
+        $this->assertEquals([], $getAllowedArguments);
+
+        $getAllowedArguments = $mockObject
+            ->withAllowedArguments(['test_key_1', 'test_key_2', 'test_key_3'])
+            ->getAllowedArguments();
+        $this->assertEquals(['test_key_1', 'test_key_2', 'test_key_3'], $getAllowedArguments);
+
+        $getAllowedArguments = $mockObject
+            ->withoutAllowedArguments(['test_key_1', 'test_key_2'])
+            ->getAllowedArguments();
+        $this->assertEquals(['test_key_3'], $getAllowedArguments);
+    }
+
+    public function testModifyReadFields()
+    {
+        $mockObject = new MockObject([]);
+        $getReadFields = $mockObject->getReadFields();
+        $this->assertEquals([], $getReadFields);
+
+        $getReadFields = $mockObject
+            ->withReadFields(['test_key_1', 'test_key_2', 'test_key_3'])
+            ->getReadFields();
+        $this->assertEquals(['test_key_1', 'test_key_2', 'test_key_3'], $getReadFields);
+
+        $getReadFields = $mockObject
+            ->withoutReadFields(['test_key_1', 'test_key_2'])
+            ->getReadFields();
+        $this->assertEquals(['test_key_3'], $getReadFields);
+    }
+
+    public function testModifyUpdateFields()
+    {
+        $mockObject = new MockObject([]);
+        $getUpdateFields = $mockObject->getUpdateFields();
+        $this->assertEquals([], $getUpdateFields);
+
+        $getUpdateFields = $mockObject
+            ->withUpdateFields(['test_key_1', 'test_key_2', 'test_key_3'])
+            ->getUpdateFields();
+        $this->assertEquals(['test_key_1', 'test_key_2', 'test_key_3'], $getUpdateFields);
+
+        $getUpdateFields = $mockObject
+            ->withoutUpdateFields(['test_key_1', 'test_key_2'])
+            ->getUpdateFields();
+        $this->assertEquals(['test_key_3'], $getUpdateFields);
+    }
+
+    public function testModifySearchFields()
+    {
+        $mockObject = new MockObject([]);
+        $getSearchFields = $mockObject->getSearchFields();
+        $this->assertEquals([], $getSearchFields);
+
+        $getSearchFields = $mockObject
+            ->withSearchFields(['test_key_1', 'test_key_2', 'test_key_3'])
+            ->getSearchFields();
+        $this->assertEquals(['test_key_1', 'test_key_2', 'test_key_3'], $getSearchFields);
+
+        $getSearchFields = $mockObject
+            ->withoutSearchFields(['test_key_1', 'test_key_2'])
+            ->getSearchFields();
+        $this->assertEquals(['test_key_3'], $getSearchFields);
+    }
 }

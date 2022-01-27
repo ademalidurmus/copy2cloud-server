@@ -43,6 +43,8 @@ class Contents extends Base
     {
         $_POST = $request->getParsedBody();
 
+        print_r($_POST);
+
         $body = [];
         return $response->withJson($body, HttpStatusCodes::CREATED);
     }
