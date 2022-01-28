@@ -20,17 +20,22 @@ class BeforeMiddleware
      * @param RequestHandler $handler PSR-15 request handler
      * @return ResponseInterface
      * @throws MaintenanceModeException
+     * @todo improve remote addr
      */
     public function __invoke(ServerRequest|Request $request, RequestHandler $handler): ResponseInterface
     {
         Container::set(CommonConstants::REQUEST, $request);
+        Container::set(
+            CommonConstants::REMOTE_ADDR,
+            (string)($request->getServerParam('HTTP_X_FORWARDED_FOR') ?? $request->getServerParam('REMOTE_ADDR'))
+        );
 
         Log::requestResponseLog([
             'type' => 'API',
             'meta' => [
                 'method' => $request->getMethod(),
                 'path' => $request->getUri()->getPath(),
-                'ip' => (string)($request->getServerParam('HTTP_X_FORWARDED_FOR') ?? $request->getServerParam('REMOTE_ADDR')),
+                'ip' => Container::get(CommonConstants::REMOTE_ADDR),
             ],
             CommonConstants::REQUEST => [
                 'headers' => $request->getHeaders(),

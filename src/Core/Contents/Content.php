@@ -7,23 +7,35 @@ namespace Copy2Cloud\Core\Contents;
 use Copy2Cloud\Base\Constants\ErrorCodes;
 use Copy2Cloud\Base\Constants\Limitations;
 use Copy2Cloud\Base\Exceptions\InvalidArgumentException;
+use Copy2Cloud\Base\Exceptions\NotFoundException;
+use Copy2Cloud\Base\Exceptions\UnexpectedValueException;
 use Copy2Cloud\Base\Utilities\PropertyAccessor;
 use Copy2Cloud\Base\Utilities\Str;
 use Copy2Cloud\Core\Contents\Store\Redis;
 use Copy2Cloud\Core\Interfaces\StoreRedisInterface;
+use Defuse\Crypto\Exception\EnvironmentIsBrokenException;
 use Respect\Validation\Validator as v;
 
 /**
  * @property string|null $key
+ * @property string|null $secret
+ * @property string $content
+ * @property array $acl
+ * @property array $attributes
+ * @property int $destroy_count
+ * @property int $ttl
+ * @property int $insert_time
+ * @property int $expire_time
  */
 class Content extends PropertyAccessor
 {
-    private StoreRedisInterface $store;
     protected array $allowedArguments = [];
     protected array $allFields = [
+        'key',
         'content',
         'acl',
         'attributes',
+        'destroy_count',
         'ttl',
         'insert_time',
         'expire_time',
@@ -34,34 +46,61 @@ class Content extends PropertyAccessor
 
     /**
      * @param string|null $key
-     * @param StoreRedisInterface|null $store
+     * @param string|null $secret
+     * @param StoreRedisInterface $store
+     * @throws EnvironmentIsBrokenException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
      */
-    public function __construct(?string $key = null, ?StoreRedisInterface $store = null)
+    public function __construct(
+        ?string                     $key = null,
+        ?string                     $secret = null,
+        private StoreRedisInterface $store = new Redis()
+    )
     {
         parent::__construct();
 
-//        $this->addRe
+        $this->withReadFields($this->allFields)->withAllowedArguments($this->allFields);
 
         $this->key = $key;
-
-        $this->store = $store ?? new Redis();
+        $this->secret = $secret;
 
         if ($this->key) {
             $this->read();
         }
     }
 
+    /**
+     * @param array $data
+     * @return $this
+     * @throws InvalidArgumentException
+     * @throws UnexpectedValueException
+     * @throws EnvironmentIsBrokenException
+     */
     public function create(array $data): Content
     {
-        foreach ($data as $key => $value) {
-
+        foreach ($this->allFields as $field) {
+            $this->{$field} = $this->checkValue($field, $data[$field]);
         }
+
+        $this->attributes['size'] = strlen($this->content);
+
+        $this->key = $this->key ?? $this->generateKey();
+        $this->destroy_count = $this->destroy_count ?? -1;
+        $this->insert_time = time();
+        $defaultTtl = $this->expire_time ? $this->expire_time - $this->insert_time : Limitations::DEFAULT_TTL;
+        $this->ttl = $this->ttl ?? $defaultTtl;
+        $this->expire_time = $this->expire_time ?? $this->insert_time + $this->ttl;
+
         $this->store->create($this);
         return $this;
     }
 
     /**
      * @return $this
+     * @throws EnvironmentIsBrokenException
+     * @throws UnexpectedValueException
+     * @throws NotFoundException
      */
     public function read(): Content
     {
@@ -101,6 +140,7 @@ class Content extends PropertyAccessor
      * @param mixed $value
      * @return mixed
      * @throws InvalidArgumentException
+     * @throws UnexpectedValueException
      */
     public function checkValue(string $key, mixed $value): mixed
     {
@@ -110,7 +150,19 @@ class Content extends PropertyAccessor
         }
 
         switch ($key) {
-            case 'key':
+            case 'expire_time':
+                if (v::nullType()->validate($value)) {
+                    $value = time() + $this->ttl;
+                }
+                if ($value < time() || $value > time() + Limitations::MAX_TTL) {
+                    throw new UnexpectedValueException("Unexpected expire time!", ErrorCodes::UNKNOWN);
+                }
+                break;
+
+            case 'ttl':
+                if ($value < 0 || $value > Limitations::MAX_TTL) {
+                    throw new UnexpectedValueException("Unexpected ttl!", ErrorCodes::UNKNOWN);
+                }
                 break;
         }
 
