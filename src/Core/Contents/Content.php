@@ -156,6 +156,14 @@ class Content extends PropertyAccessor
             throw new InvalidArgumentException("'{$key}' not allowed", ErrorCodes::INVALID_ARGUMENT);
         }
 
+        $fieldRemover = function (array &$array, array $fields) {
+            foreach ($array as $key => $value) {
+                if (!v::in($fields, true)->validate($key)) {
+                    unset($array[$key]);
+                }
+            }
+        };
+
         switch ($key) {
             case 'key':
                 if (v::nullType()->validate($value)) {
@@ -209,6 +217,36 @@ class Content extends PropertyAccessor
                     throw new UnexpectedValueException('Invalid destroy count', ErrorCodes::UNKNOWN);
                 }
                 $value = intval($value);
+                break;
+
+            case 'acl':
+                $validateIp = fn(string $key, mixed $value) => !v::key(
+                    $key,
+                    v::allOf(
+                        v::arrayType(),
+                        v::unique(),
+                        v::each(
+                            v::anyOf(
+                                v::ip(),
+                                v::ip('*', FILTER_FLAG_IPV6)
+                            )
+                        )
+                    ),
+                    false
+                )->validate($value);
+
+                if ($validateIp('allow', $value)) {
+                    throw new UnexpectedValueException('Invalid acl-allow options', ErrorCodes::UNKNOWN);
+                }
+                if ($validateIp('deny', $value)) {
+                    throw new UnexpectedValueException('Invalid acl-deny options', ErrorCodes::UNKNOWN);
+                }
+
+                $fieldRemover($value, ['allow', 'deny', 'owner']);
+                break;
+
+            case 'attributes':
+                $fieldRemover($value, ['size']);
                 break;
         }
 
