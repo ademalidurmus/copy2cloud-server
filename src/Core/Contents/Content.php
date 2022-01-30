@@ -6,6 +6,9 @@ namespace Copy2Cloud\Core\Contents;
 
 use Copy2Cloud\Base\Constants\ErrorCodes;
 use Copy2Cloud\Base\Constants\Limitations;
+use Copy2Cloud\Base\Enums\StrCharacters;
+use Copy2Cloud\Base\Enums\StrTypes;
+use Copy2Cloud\Base\Exceptions\DuplicateEntryException;
 use Copy2Cloud\Base\Exceptions\InvalidArgumentException;
 use Copy2Cloud\Base\Exceptions\NotFoundException;
 use Copy2Cloud\Base\Exceptions\UnexpectedValueException;
@@ -76,21 +79,25 @@ class Content extends PropertyAccessor
      * @throws InvalidArgumentException
      * @throws UnexpectedValueException
      * @throws EnvironmentIsBrokenException
+     * @throws DuplicateEntryException
      */
     public function create(array $data): Content
     {
         foreach ($this->allFields as $field) {
-            $this->{$field} = $this->checkValue($field, $data[$field]);
+            $this->{$field} = $this->checkValue($field, $data[$field] ?? null);
         }
 
-        $this->attributes['size'] = strlen($this->content);
-
         $this->key = $this->key ?? $this->generateKey();
+
+        if ($this->isExists($this->key)) {
+            throw new DuplicateEntryException('Key already exists', ErrorCodes::UNKNOWN);
+        }
+
         $this->destroy_count = $this->destroy_count ?? -1;
         $this->insert_time = time();
-        $defaultTtl = $this->expire_time ? $this->expire_time - $this->insert_time : Limitations::DEFAULT_TTL;
-        $this->ttl = $this->ttl ?? $defaultTtl;
-        $this->expire_time = $this->expire_time ?? $this->insert_time + $this->ttl;
+        $this->expire_time = $this->expire_time ?? $this->insert_time + Limitations::DEFAULT_TTL;
+        $this->ttl = $this->expire_time - $this->insert_time;
+        $this->attributes['size'] = strlen($this->content);
 
         $this->store->create($this);
         return $this;
@@ -119,7 +126,7 @@ class Content extends PropertyAccessor
                 $length = Limitations::RANDOM_KEY_LENGTH;
             }
 
-            $key = Str::generateRandomStr($length);
+            $key = Str::generateRandomStr($length, StrTypes::mixed, StrCharacters::lowercase);
             $isExist = $this->isExists($key);
         } while ($isExist);
 
@@ -146,23 +153,62 @@ class Content extends PropertyAccessor
     {
         $allowedArguments = $this->getAllowedArguments();
         if (!v::in($allowedArguments, true)->validate($key)) {
-            throw new InvalidArgumentException("'{$key}' not allowed!", ErrorCodes::INVALID_ARGUMENT);
+            throw new InvalidArgumentException("'{$key}' not allowed", ErrorCodes::INVALID_ARGUMENT);
         }
 
         switch ($key) {
+            case 'key':
+                if (v::nullType()->validate($value)) {
+                    break;
+                }
+                if (
+                    !v::allOf(
+                        v::alnum('-_'),
+                        v::noWhitespace(),
+                        v::length(Limitations::KEY_MIN_LENGTH, Limitations::KEY_MAX_LENGTH)
+                    )->validate($value)
+                ) {
+                    throw new UnexpectedValueException(
+                        sprintf(
+                            'Key length must be %s to %s alphanumeric characters',
+                            Limitations::KEY_MIN_LENGTH,
+                            Limitations::KEY_MAX_LENGTH
+                        ),
+                        ErrorCodes::UNKNOWN
+                    );
+                }
+                break;
+
+            case 'content':
+                if (!v::stringType()->validate($value)) {
+                    throw new UnexpectedValueException('Content must be a string', ErrorCodes::UNKNOWN);
+                }
+                $value = trim($value);
+                if (!v::length(0, Limitations::CONTENT_MAX_LENGTH)->validate($value)) {
+                    throw new UnexpectedValueException('Content length too long', ErrorCodes::UNKNOWN);
+                }
+                break;
+
             case 'expire_time':
                 if (v::nullType()->validate($value)) {
-                    $value = time() + $this->ttl;
+                    break;
                 }
                 if ($value < time() || $value > time() + Limitations::MAX_TTL) {
-                    throw new UnexpectedValueException("Unexpected expire time!", ErrorCodes::UNKNOWN);
+                    throw new UnexpectedValueException('Unexpected expire time', ErrorCodes::UNKNOWN);
                 }
                 break;
 
             case 'ttl':
                 if ($value < 0 || $value > Limitations::MAX_TTL) {
-                    throw new UnexpectedValueException("Unexpected ttl!", ErrorCodes::UNKNOWN);
+                    throw new UnexpectedValueException('Unexpected ttl', ErrorCodes::UNKNOWN);
                 }
+                break;
+
+            case 'destroy_count':
+                if ($value < -1 || $value === 0) {
+                    throw new UnexpectedValueException('Invalid destroy count', ErrorCodes::UNKNOWN);
+                }
+                $value = intval($value);
                 break;
         }
 

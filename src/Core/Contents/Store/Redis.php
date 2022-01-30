@@ -77,6 +77,14 @@ class Redis extends StoreRedisAbstract implements StoreRedisInterface
             throw new NotFoundException('Content not found!', ErrorCodes::UNKNOWN);
         }
 
+        if (v::key('destroy_count', v::between(0, 100))->validate($data)) {
+            $response = $this->connection->hincrby($hash, 'destroy_count', -1);
+            if ($response < 0) {
+                $this->connection->del($hash);
+                throw new NotFoundException('Content not found!', ErrorCodes::UNKNOWN);
+            }
+        }
+
         $data['ttl'] = $this->connection->ttl($hash);
 
         try {

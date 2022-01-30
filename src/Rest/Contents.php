@@ -79,7 +79,6 @@ class Contents extends Base
         $_GET = $request->getQueryParams();
 
         $content = new Content($args['key'], $_GET['secret'] ?? '');
-        $content = $content->read();
 
         $body = self::prepareResponse($content);
         return $response->withJson($body, HttpStatusCodes::CREATED);
