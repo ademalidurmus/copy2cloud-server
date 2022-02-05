@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Copy2Cloud\Base\Utilities;
 
+use Copy2Cloud\Base\Constants\CommonConstants;
 use Copy2Cloud\Base\Constants\ErrorCodes;
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
 use Copy2Cloud\Base\Exceptions\StoreRedisException;
@@ -174,5 +175,30 @@ class Container
     public static function getTransactionId(): string
     {
         return self::get(self::RESOURCE_TRANSACTION_ID);
+    }
+
+    /**
+     * Method to set client ip
+     *
+     * @param string $clientIp
+     * @return string
+     */
+    public static function setClientIp(string $clientIp): string
+    {
+        return self::set(CommonConstants::CLIENT_IP, $clientIp);
+    }
+
+    /**
+     * Method to get client ip
+     *
+     * @return string
+     */
+    public static function getClientIp(): string
+    {
+        try {
+            return self::get(CommonConstants::CLIENT_IP) ?? '';
+        } catch (\Throwable $th) {
+            return '';
+        }
     }
 }

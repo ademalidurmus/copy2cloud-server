@@ -6,7 +6,7 @@ namespace Copy2Cloud\Base\Constants;
 
 class CommonConstants
 {
-    const REMOTE_ADDR = 'REMOTE_ADDR';
+    const CLIENT_IP = 'CLIENT_IP';
     const REQUEST = 'REQUEST';
     const RESPONSE = 'RESPONSE';
     const CREATE = 'create';
