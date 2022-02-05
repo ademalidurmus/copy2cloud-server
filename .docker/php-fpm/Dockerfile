@@ -6,6 +6,7 @@ RUN apt-get update; \
         git \
         curl \
         php8.1-intl \
+        php8.1-bcmath \
         php8.1-redis \
         php8.1-xdebug; \
     apt-get clean; \

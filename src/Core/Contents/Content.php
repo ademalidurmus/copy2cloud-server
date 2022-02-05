@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace Copy2Cloud\Core\Contents;
 
+use Copy2Cloud\Base\Constants\CommonConstants;
 use Copy2Cloud\Base\Constants\ErrorCodes;
 use Copy2Cloud\Base\Constants\Limitations;
 use Copy2Cloud\Base\Enums\StrCharacters;
 use Copy2Cloud\Base\Enums\StrTypes;
+use Copy2Cloud\Base\Exceptions\AccessDeniedException;
 use Copy2Cloud\Base\Exceptions\DuplicateEntryException;
 use Copy2Cloud\Base\Exceptions\InvalidArgumentException;
 use Copy2Cloud\Base\Exceptions\NotFoundException;
 use Copy2Cloud\Base\Exceptions\UnexpectedValueException;
+use Copy2Cloud\Base\Utilities\Container;
 use Copy2Cloud\Base\Utilities\PropertyAccessor;
 use Copy2Cloud\Base\Utilities\Str;
 use Copy2Cloud\Core\Contents\Store\Redis;
@@ -28,6 +31,7 @@ use Respect\Validation\Validator as v;
  * @property int $destroy_count
  * @property int $ttl
  * @property int $insert_time
+ * @property int $update_time
  * @property int $expire_time
  */
 class Content extends PropertyAccessor
@@ -41,6 +45,7 @@ class Content extends PropertyAccessor
         'destroy_count',
         'ttl',
         'insert_time',
+        'update_time',
         'expire_time',
         'secret',
     ];
@@ -95,6 +100,7 @@ class Content extends PropertyAccessor
 
         $this->destroy_count = $this->destroy_count ?? -1;
         $this->insert_time = time();
+        $this->update_time = time();
         $this->expire_time = $this->expire_time ?? $this->insert_time + Limitations::DEFAULT_TTL;
         $this->ttl = $this->expire_time - $this->insert_time;
         $this->attributes['size'] = strlen($this->content);
@@ -108,10 +114,23 @@ class Content extends PropertyAccessor
      * @throws EnvironmentIsBrokenException
      * @throws UnexpectedValueException
      * @throws NotFoundException
+     * @throws AccessDeniedException
      */
     public function read(): Content
     {
         $this->store->read($this);
+
+        $scope = $this->getClientScope();
+        if (!v::in($scope)->validate(CommonConstants::READ)) {
+            throw new AccessDeniedException('Cannot read this content', ErrorCodes::UNKNOWN);
+        }
+
+        $this->store->decreaseDestroyCount($this);
+        return $this;
+    }
+
+    public function update(array $data): Content
+    {
         return $this;
     }
 
@@ -140,6 +159,58 @@ class Content extends PropertyAccessor
     public function isExists(string $key): bool
     {
         return $this->store->isExists($key);
+    }
+
+    /**
+     * @param string|null $clientIp
+     * @return array
+     */
+    public function getClientScope(?string $clientIp = null): array
+    {
+        if (!$clientIp) {
+            $clientIp = Container::getClientIp();
+        }
+
+        $ipIsInRange = function (string $range, string $clientIp) {
+            if (
+                !v::contains('/')->validate($range)
+                && !v::contains('-')->validate($range)
+            ) {
+                $range = "{$range}-{$range}";
+            }
+            return v::ip(
+                $range,
+                FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6
+            )->validate($clientIp);
+        };
+
+        $ipListInvolveGivenIp = function (array $ipList, $clientIp) use ($ipIsInRange) {
+            foreach ($ipList as $ip) {
+                if ($ipIsInRange($ip, $clientIp)) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        $scope = [];
+        $isOwner = v::key('owner')->validate($this->acl) && $ipIsInRange($this->acl['owner'], $clientIp);
+
+        switch (true) {
+            case $ipListInvolveGivenIp($this->acl['allow'] ?? [], $clientIp):
+            case $isOwner:
+                $scope[] = CommonConstants::READ;
+                if ($isOwner) {
+                    $scope[] = CommonConstants::UPDATE;
+                }
+                break;
+
+            case $ipListInvolveGivenIp($this->acl['deny'] ?? [], $clientIp):
+                $scope = []; // clean scope for restricted client
+                break;
+        }
+
+        return array_values(array_unique($scope));
     }
 
     /**
@@ -213,6 +284,9 @@ class Content extends PropertyAccessor
                 break;
 
             case 'destroy_count':
+                if (v::nullType()->validate($value)) {
+                    break;
+                }
                 if ($value < -1 || $value === 0) {
                     throw new UnexpectedValueException('Invalid destroy count', ErrorCodes::UNKNOWN);
                 }
@@ -220,7 +294,7 @@ class Content extends PropertyAccessor
                 break;
 
             case 'acl':
-                $validateIp = fn(string $key, mixed $value) => !v::key(
+                $validateIp = fn(string $key, mixed $value) => v::key(
                     $key,
                     v::allOf(
                         v::arrayType(),
@@ -235,11 +309,18 @@ class Content extends PropertyAccessor
                     false
                 )->validate($value);
 
-                if ($validateIp('allow', $value)) {
-                    throw new UnexpectedValueException('Invalid acl-allow options', ErrorCodes::UNKNOWN);
+                if (!$validateIp('allow', $value)) {
+                    throw new UnexpectedValueException('Invalid acl-allow values', ErrorCodes::UNKNOWN);
                 }
-                if ($validateIp('deny', $value)) {
-                    throw new UnexpectedValueException('Invalid acl-deny options', ErrorCodes::UNKNOWN);
+                if (!$validateIp('deny', $value)) {
+                    throw new UnexpectedValueException('Invalid acl-deny values', ErrorCodes::UNKNOWN);
+                }
+
+                if (
+                    v::key('deny')->validate($value)
+                    && v::in($value['deny'])->validate($value['owner'] ?? '')
+                ) {
+                    throw new UnexpectedValueException('Cannot add own ip address to deny list', ErrorCodes::UNKNOWN);
                 }
 
                 $fieldRemover($value, ['allow', 'deny', 'owner']);

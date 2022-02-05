@@ -74,15 +74,7 @@ class Redis extends StoreRedisAbstract implements StoreRedisInterface
         $data = $this->connection->hgetall($hash);
 
         if (!$data) {
-            throw new NotFoundException('Content not found!', ErrorCodes::UNKNOWN);
-        }
-
-        if (v::key('destroy_count', v::between(0, 100))->validate($data)) {
-            $response = $this->connection->hincrby($hash, 'destroy_count', -1);
-            if ($response < 0) {
-                $this->connection->del($hash);
-                throw new NotFoundException('Content not found!', ErrorCodes::UNKNOWN);
-            }
+            throw new NotFoundException('Content not found', ErrorCodes::UNKNOWN);
         }
 
         $data['ttl'] = $this->connection->ttl($hash);
@@ -90,7 +82,7 @@ class Redis extends StoreRedisAbstract implements StoreRedisInterface
         try {
             $data = Crypto::decryptContext(self::ENCRYPTED_FIELDS, $data, $content->secret);
         } catch (WrongKeyOrModifiedCiphertextException $e) {
-            throw new UnexpectedValueException('Invalid secret!', ErrorCodes::UNKNOWN);
+            throw new UnexpectedValueException('Invalid secret', ErrorCodes::UNKNOWN);
         }
 
         foreach ($data as $field => $value) {
@@ -106,5 +98,28 @@ class Redis extends StoreRedisAbstract implements StoreRedisInterface
 
     public function delete(Content $content): bool
     {
+    }
+
+    /**
+     * @param Content $content
+     * @param bool $updateObject
+     * @return bool
+     * @throws NotFoundException
+     */
+    public function decreaseDestroyCount(Content $content, bool $updateObject = true): bool
+    {
+        $hash = $this->getHash($content->key);
+        if ($content->destroy_count > -1) {
+            $destroyCount = $this->connection->hincrby($hash, 'destroy_count', -1);
+            if ($destroyCount < 0) {
+                $this->connection->del($hash);
+                throw new NotFoundException('Content not found', ErrorCodes::UNKNOWN);
+            }
+            if ($updateObject) {
+                $content->destroy_count = $destroyCount;
+            }
+            return true;
+        }
+        return false;
     }
 }

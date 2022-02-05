@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Copy2Cloud\Rest;
 
-use Copy2Cloud\Base\Constants\CommonConstants;
 use Copy2Cloud\Base\Constants\HttpStatusCodes;
+use Copy2Cloud\Base\Exceptions\DuplicateEntryException;
 use Copy2Cloud\Base\Exceptions\InvalidArgumentException;
-use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
 use Copy2Cloud\Base\Exceptions\NotFoundException;
 use Copy2Cloud\Base\Exceptions\UnexpectedValueException;
 use Copy2Cloud\Base\Utilities\Container;
@@ -51,13 +50,14 @@ class Contents extends Base
      * @throws EnvironmentIsBrokenException
      * @throws InvalidArgumentException
      * @throws UnexpectedValueException
-     * @throws MaintenanceModeException
+     * @throws DuplicateEntryException
      */
     public function create(Request $request, Response $response, array $args): Response|ResponseInterface
     {
         $_POST = $request->getParsedBody();
 
-        $_POST['acl']['owner'] = Container::get(CommonConstants::REMOTE_ADDR);
+        $_POST['acl']['owner'] = Container::getClientIp();
+
         $content = new Content();
         $content->create($_POST);
 
@@ -84,17 +84,18 @@ class Contents extends Base
         return $response->withJson($body, HttpStatusCodes::CREATED);
     }
 
-    public static function prepareResponse(Content $data, array $without = []): array
+    public static function prepareResponse(Content $content, array $without = []): array
     {
         $response = [
-            'key' => (string)$data->key,
-            'content' => (string)$data->content,
-            'attributes' => (array)$data->attributes,
-            'acl' => (array)$data->acl,
-            'secret' => (string)$data->secret,
-            'ttl' => (int)$data->ttl,
-            'insert_time' => (int)$data->insert_time,
-            'expire_time' => (int)$data->expire_time,
+            'key' => (string)$content->key,
+            'content' => (string)$content->content,
+            'attributes' => (array)$content->attributes,
+            'acl' => (array)$content->acl,
+            'secret' => (string)$content->secret,
+            'ttl' => (int)$content->ttl,
+            'destroy_count' => (int)$content->destroy_count,
+            'insert_time' => (int)$content->insert_time,
+            'expire_time' => (int)$content->expire_time,
         ];
 
         foreach ($without as $key) {

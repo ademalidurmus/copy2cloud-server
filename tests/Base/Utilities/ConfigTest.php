@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 final class ConfigTest extends TestCase
 {
     /**
+     * @before
      * @return void
      */
     public function testInit()
