@@ -16,7 +16,7 @@ use const APP_NAME;
 class Log extends Logger
 {
     const DEFAULT_FILENAME = '/var/log/copy2cloud.log';
-    const DEFAULT_LEVEL = self::ERROR;
+    const DEFAULT_LEVEL = 'ERROR';
 
     private static array $requestResponse = [];
 
