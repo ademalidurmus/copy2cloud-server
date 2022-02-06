@@ -92,12 +92,41 @@ class Redis extends StoreRedisAbstract implements StoreRedisInterface
         return $content;
     }
 
+    /**
+     * @param Content $content
+     * @return Content
+     * @throws EnvironmentIsBrokenException
+     * @throws NotFoundException
+     */
     public function update(Content $content): Content
     {
+        if (!$this->isExists($content->key)) {
+            throw new NotFoundException('Content not found', ErrorCodes::UNKNOWN);
+        }
+
+        $data = [];
+        foreach ($content->getUpdateFields() as $field) {
+            if (v::in(['key', 'secret', 'ttl'], true)->validate($field)) {
+                continue;
+            }
+            $data[$field] = $content->{$field};
+        }
+
+        $data = Crypto::encryptContext(self::ENCRYPTED_FIELDS, $data, $content->secret);
+        $hash = $this->getHash($content->key);
+        $this->connection->hmset($hash, $data);
+        $this->connection->expire($hash, $content->ttl);
+
+        return $content;
     }
 
+    /**
+     * @param Content $content
+     * @return bool
+     */
     public function delete(Content $content): bool
     {
+        return $this->connection->del($this->getHash($content->key)) > 0;
     }
 
     /**

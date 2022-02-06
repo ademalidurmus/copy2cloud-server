@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Copy2Cloud\Rest;
 
 use Copy2Cloud\Base\Constants\HttpStatusCodes;
+use Copy2Cloud\Base\Exceptions\AccessDeniedException;
 use Copy2Cloud\Base\Exceptions\DuplicateEntryException;
 use Copy2Cloud\Base\Exceptions\InvalidArgumentException;
 use Copy2Cloud\Base\Exceptions\NotFoundException;
@@ -25,6 +26,8 @@ class Contents extends Base
     protected static array $routes = [
         ['POST /v1/contents', 'create'],
         ['GET /v1/contents/{key}', 'read'],
+        ['PUT /v1/contents/{key}', 'update'],
+        ['DELETE /v1/contents/{key}', 'delete'],
     ];
 
     public function __construct()
@@ -73,6 +76,7 @@ class Contents extends Base
      * @throws EnvironmentIsBrokenException
      * @throws UnexpectedValueException
      * @throws NotFoundException
+     * @throws AccessDeniedException
      */
     public function read(Request $request, Response $response, array $args): Response|ResponseInterface
     {
@@ -82,6 +86,49 @@ class Contents extends Base
 
         $body = self::prepareResponse($content);
         return $response->withJson($body, HttpStatusCodes::CREATED);
+    }
+
+    /**
+     * @param Request $request
+     * @param Response $response
+     * @param array $args
+     * @return Response|ResponseInterface
+     * @throws EnvironmentIsBrokenException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     * @throws AccessDeniedException
+     * @throws InvalidArgumentException
+     */
+    public function update(Request $request, Response $response, array $args): Response|ResponseInterface
+    {
+        $_PUT = $request->getParsedBody();
+        $_GET = $request->getQueryParams();
+
+        $content = new Content($args['key'], $_PUT['secret'] ?? $_GET['secret'] ?? '');
+        $update = $content->update($_PUT);
+
+        $body = self::prepareResponse($update);
+        return $response->withJson($body, HttpStatusCodes::OK);
+    }
+
+    /**
+     * @param Request $request
+     * @param Response $response
+     * @param array $args
+     * @return Response|ResponseInterface
+     * @throws AccessDeniedException
+     * @throws EnvironmentIsBrokenException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     */
+    public function delete(Request $request, Response $response, array $args): Response|ResponseInterface
+    {
+        $_GET = $request->getQueryParams();
+
+        $content = new Content($args['key'], $_GET['secret'] ?? '');
+        $content->delete();
+
+        return $response->withStatus(HttpStatusCodes::NO_CONTENT);
     }
 
     public static function prepareResponse(Content $content, array $without = []): array

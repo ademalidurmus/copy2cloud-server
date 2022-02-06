@@ -50,7 +50,15 @@ class Content extends PropertyAccessor
         'secret',
     ];
     protected array $readFields = [];
-    protected array $updateFields = [];
+    protected array $updateFields = [
+        'content',
+        'acl',
+        'attributes',
+        'destroy_count',
+        'ttl',
+        'update_time',
+        'expire_time',
+    ];
 
     /**
      * @param string|null $key
@@ -59,6 +67,7 @@ class Content extends PropertyAccessor
      * @throws EnvironmentIsBrokenException
      * @throws NotFoundException
      * @throws UnexpectedValueException
+     * @throws AccessDeniedException
      */
     public function __construct(
         ?string                     $key = null,
@@ -120,17 +129,56 @@ class Content extends PropertyAccessor
     {
         $this->store->read($this);
 
-        $scope = $this->getClientScope();
-        if (!v::in($scope)->validate(CommonConstants::READ)) {
-            throw new AccessDeniedException('Cannot read this content', ErrorCodes::UNKNOWN);
+        if (!v::in($this->getClientScope())->validate(CommonConstants::READ)) {
+            throw new AccessDeniedException('Cannot access this content', ErrorCodes::UNKNOWN);
         }
 
         $this->store->decreaseDestroyCount($this);
         return $this;
     }
 
+    /**
+     * @param array $data
+     * @return $this
+     * @throws InvalidArgumentException
+     * @throws UnexpectedValueException
+     * @throws AccessDeniedException
+     * @throws EnvironmentIsBrokenException
+     * @throws NotFoundException
+     */
     public function update(array $data): Content
     {
+        if (!v::in($this->getClientScope())->validate(CommonConstants::UPDATE)) {
+            throw new AccessDeniedException('Cannot update this content', ErrorCodes::UNKNOWN);
+        }
+
+        foreach ($this->getUpdateFields() as $field) {
+            $value = $this->checkValue($field, $data[$field] ?? $this->{$field} ?? null);
+            $this->{$field} = match ($field) {
+                'attributes', 'acl' => array_merge($this->{$field}, $value),
+                default => $value,
+            };
+        }
+
+        $this->update_time = time();
+        $this->ttl = $this->expire_time - $this->insert_time;
+        $this->attributes['size'] = strlen($this->content);
+
+        $this->store->update($this);
+        return $this;
+    }
+
+    /**
+     * @return $this
+     * @throws AccessDeniedException
+     */
+    public function delete(): Content
+    {
+        if (!v::in($this->getClientScope())->validate(CommonConstants::DELETE)) {
+            throw new AccessDeniedException('Cannot delete this content', ErrorCodes::UNKNOWN);
+        }
+
+        $this->store->delete($this);
         return $this;
     }
 
@@ -202,6 +250,7 @@ class Content extends PropertyAccessor
                 $scope[] = CommonConstants::READ;
                 if ($isOwner) {
                     $scope[] = CommonConstants::UPDATE;
+                    $scope[] = CommonConstants::DELETE;
                 }
                 break;
 
