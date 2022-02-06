@@ -197,7 +197,7 @@ class Container
     {
         try {
             return self::get(CommonConstants::CLIENT_IP) ?? '';
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             return '';
         }
     }
