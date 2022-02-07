@@ -59,6 +59,7 @@ class Contents extends Base
     {
         $_POST = $request->getParsedBody();
 
+        $_POST['acl'] = $_POST['acl'] ?? [];
         $_POST['acl']['owner'] = Container::getClientIp();
 
         $content = new Content();

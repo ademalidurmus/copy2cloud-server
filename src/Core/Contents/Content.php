@@ -104,7 +104,7 @@ class Content extends PropertyAccessor
         $this->key = $this->key ?? $this->generateKey();
 
         if ($this->isExists($this->key)) {
-            throw new DuplicateEntryException('Key already exists', ErrorCodes::UNKNOWN);
+            throw new DuplicateEntryException('Key already exists', ErrorCodes::CONTENT_KEY_ALREADY_EXIST);
         }
 
         $this->destroy_count = $this->destroy_count ?? -1;
@@ -130,7 +130,10 @@ class Content extends PropertyAccessor
         $this->store->read($this);
 
         if (!v::in($this->getClientScope())->validate(CommonConstants::READ)) {
-            throw new AccessDeniedException('Cannot access this content', ErrorCodes::UNKNOWN);
+            throw new AccessDeniedException(
+                'Cannot access this content',
+                ErrorCodes::CONTENT_ACCESS_DENIED_TO_MODIFY
+            );
         }
 
         $this->store->decreaseDestroyCount($this);
@@ -149,7 +152,10 @@ class Content extends PropertyAccessor
     public function update(array $data): Content
     {
         if (!v::in($this->getClientScope())->validate(CommonConstants::UPDATE)) {
-            throw new AccessDeniedException('Cannot update this content', ErrorCodes::UNKNOWN);
+            throw new AccessDeniedException(
+                'Cannot update this content',
+                ErrorCodes::CONTENT_ACCESS_DENIED_TO_UPDATE
+            );
         }
 
         foreach ($this->getUpdateFields() as $field) {
@@ -175,7 +181,10 @@ class Content extends PropertyAccessor
     public function delete(): Content
     {
         if (!v::in($this->getClientScope())->validate(CommonConstants::DELETE)) {
-            throw new AccessDeniedException('Cannot delete this content', ErrorCodes::UNKNOWN);
+            throw new AccessDeniedException(
+                'Cannot delete this content',
+                ErrorCodes::CONTENT_ACCESS_DENIED_TO_DELETE
+            );
         }
 
         $this->store->delete($this);
@@ -302,18 +311,24 @@ class Content extends PropertyAccessor
                             Limitations::KEY_MIN_LENGTH,
                             Limitations::KEY_MAX_LENGTH
                         ),
-                        ErrorCodes::UNKNOWN
+                        ErrorCodes::CONTENT_KEY_MUST_BE_ALPHANUMERIC
                     );
                 }
                 break;
 
             case 'content':
                 if (!v::stringType()->validate($value)) {
-                    throw new UnexpectedValueException('Content must be a string', ErrorCodes::UNKNOWN);
+                    throw new UnexpectedValueException(
+                        'Content must be a string',
+                        ErrorCodes::CONTENT_VALUE_MUST_BE_STRING
+                    );
                 }
                 $value = trim($value);
                 if (!v::length(0, Limitations::CONTENT_MAX_LENGTH)->validate($value)) {
-                    throw new UnexpectedValueException('Content length too long', ErrorCodes::UNKNOWN);
+                    throw new UnexpectedValueException(
+                        'Content length exceeded',
+                        ErrorCodes::CONTENT_LENGTH_EXCEEDED
+                    );
                 }
                 break;
 
@@ -322,13 +337,16 @@ class Content extends PropertyAccessor
                     break;
                 }
                 if ($value < time() || $value > time() + Limitations::MAX_TTL) {
-                    throw new UnexpectedValueException('Unexpected expire time', ErrorCodes::UNKNOWN);
+                    throw new UnexpectedValueException(
+                        'Unexpected expire time',
+                        ErrorCodes::CONTENT_UNEXPECTED_EXPIRE_TIME
+                    );
                 }
                 break;
 
             case 'ttl':
                 if ($value < 0 || $value > Limitations::MAX_TTL) {
-                    throw new UnexpectedValueException('Unexpected ttl', ErrorCodes::UNKNOWN);
+                    throw new UnexpectedValueException('Unexpected ttl', ErrorCodes::CONTENT_UNEXPECTED_TTL);
                 }
                 break;
 
@@ -337,7 +355,10 @@ class Content extends PropertyAccessor
                     break;
                 }
                 if ($value < -1 || $value === 0) {
-                    throw new UnexpectedValueException('Invalid destroy count', ErrorCodes::UNKNOWN);
+                    throw new UnexpectedValueException(
+                        'Invalid destroy count',
+                        ErrorCodes::CONTENT_INVALID_DESTROY_COUNT
+                    );
                 }
                 $value = intval($value);
                 break;
@@ -359,23 +380,35 @@ class Content extends PropertyAccessor
                 )->validate($value);
 
                 if (!$validateIp('allow', $value)) {
-                    throw new UnexpectedValueException('Invalid acl-allow values', ErrorCodes::UNKNOWN);
+                    throw new UnexpectedValueException(
+                        'Invalid acl-allow value(s)',
+                        ErrorCodes::CONTENT_INVALID_ACL_ALLOW_VALUE
+                    );
                 }
                 if (!$validateIp('deny', $value)) {
-                    throw new UnexpectedValueException('Invalid acl-deny values', ErrorCodes::UNKNOWN);
+                    throw new UnexpectedValueException(
+                        'Invalid acl-deny value(s)',
+                        ErrorCodes::CONTENT_INVALID_ACL_DENY_VALUE
+                    );
                 }
 
                 if (
                     v::key('deny')->validate($value)
                     && v::in($value['deny'])->validate($value['owner'] ?? '')
                 ) {
-                    throw new UnexpectedValueException('Cannot add own ip address to deny list', ErrorCodes::UNKNOWN);
+                    throw new UnexpectedValueException(
+                        'Cannot add own ip address to deny list',
+                        ErrorCodes::CONTENT_CANNOT_ADD_OWN_IP_TO_DENY
+                    );
                 }
 
                 $fieldRemover($value, ['allow', 'deny', 'owner']);
                 break;
 
             case 'attributes':
+                if (!v::arrayType()->validate($value)) {
+                    $value = [];
+                }
                 $fieldRemover($value, ['size']);
                 break;
         }

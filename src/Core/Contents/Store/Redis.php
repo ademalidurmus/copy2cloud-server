@@ -74,7 +74,7 @@ class Redis extends StoreRedisAbstract implements StoreRedisInterface
         $data = $this->connection->hgetall($hash);
 
         if (!$data) {
-            throw new NotFoundException('Content not found', ErrorCodes::UNKNOWN);
+            throw new NotFoundException('Content not found', ErrorCodes::CONTENT_NOT_FOUND);
         }
 
         $data['ttl'] = $this->connection->ttl($hash);
@@ -82,7 +82,7 @@ class Redis extends StoreRedisAbstract implements StoreRedisInterface
         try {
             $data = Crypto::decryptContext(self::ENCRYPTED_FIELDS, $data, $content->secret);
         } catch (WrongKeyOrModifiedCiphertextException $e) {
-            throw new UnexpectedValueException('Invalid secret', ErrorCodes::UNKNOWN);
+            throw new UnexpectedValueException('Invalid secret', ErrorCodes::CRYPTO_INVALID_SECRET);
         }
 
         foreach ($data as $field => $value) {
@@ -101,7 +101,7 @@ class Redis extends StoreRedisAbstract implements StoreRedisInterface
     public function update(Content $content): Content
     {
         if (!$this->isExists($content->key)) {
-            throw new NotFoundException('Content not found', ErrorCodes::UNKNOWN);
+            throw new NotFoundException('Content not found', ErrorCodes::CONTENT_NOT_FOUND);
         }
 
         $data = [];
@@ -142,7 +142,7 @@ class Redis extends StoreRedisAbstract implements StoreRedisInterface
             $destroyCount = $this->connection->hincrby($hash, 'destroy_count', -1);
             if ($destroyCount < 0) {
                 $this->connection->del($hash);
-                throw new NotFoundException('Content not found', ErrorCodes::UNKNOWN);
+                throw new NotFoundException('Content not found', ErrorCodes::CONTENT_NOT_FOUND);
             }
             if ($updateObject) {
                 $content->destroy_count = $destroyCount;
