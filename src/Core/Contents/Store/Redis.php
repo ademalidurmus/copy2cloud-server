@@ -13,13 +13,13 @@ use Copy2Cloud\Base\Utilities\Crypto;
 use Copy2Cloud\Base\Utilities\Str;
 use Copy2Cloud\Core\Abstracts\StoreRedisAbstract;
 use Copy2Cloud\Core\Contents\Content;
-use Copy2Cloud\Core\Interfaces\StoreRedisInterface;
+use Copy2Cloud\Core\Interfaces\StoreInterface;
 use Defuse\Crypto\Exception\EnvironmentIsBrokenException;
 use Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException;
 use Predis\Client;
 use Respect\Validation\Validator as v;
 
-class Redis extends StoreRedisAbstract implements StoreRedisInterface
+class Redis extends StoreRedisAbstract implements StoreInterface
 {
     const ENCRYPTED_FIELDS = [
         'content',

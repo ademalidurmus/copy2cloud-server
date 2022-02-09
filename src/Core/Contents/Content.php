@@ -18,7 +18,7 @@ use Copy2Cloud\Base\Utilities\Container;
 use Copy2Cloud\Base\Utilities\PropertyAccessor;
 use Copy2Cloud\Base\Utilities\Str;
 use Copy2Cloud\Core\Contents\Store\Redis;
-use Copy2Cloud\Core\Interfaces\StoreRedisInterface;
+use Copy2Cloud\Core\Interfaces\StoreInterface;
 use Defuse\Crypto\Exception\EnvironmentIsBrokenException;
 use Respect\Validation\Validator as v;
 
@@ -63,16 +63,16 @@ class Content extends PropertyAccessor
     /**
      * @param string|null $key
      * @param string|null $secret
-     * @param StoreRedisInterface $store
+     * @param StoreInterface $store
      * @throws EnvironmentIsBrokenException
      * @throws NotFoundException
      * @throws UnexpectedValueException
      * @throws AccessDeniedException
      */
     public function __construct(
-        ?string                     $key = null,
-        ?string                     $secret = null,
-        private StoreRedisInterface $store = new Redis()
+        ?string                $key = null,
+        ?string                $secret = null,
+        private StoreInterface $store = new Redis()
     )
     {
         parent::__construct();
