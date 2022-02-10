@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Copy2Cloud\Tests\Core\Contents\Store;
 
 use Copy2Cloud\Base\Constants\Limitations;
