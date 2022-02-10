@@ -82,7 +82,7 @@ class Content extends PropertyAccessor
         $this->key = $key;
         $this->secret = $secret;
 
-        if ($this->key) {
+        if ($this->key && $this->secret) {
             $this->read();
         }
     }

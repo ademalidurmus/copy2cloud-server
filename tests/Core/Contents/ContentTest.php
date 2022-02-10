@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Copy2Cloud\Tests\Core\Contents;
 
 use Copy2Cloud\Base\Constants\CommonConstants;
@@ -85,20 +87,19 @@ class ContentTest extends TestCase
      */
     public function testCreateGenerateRandomKey()
     {
-        $store = $this->getMockBuilder(Redis::class)
-            ->disableOriginalConstructor()
+        $mockStore = $this->getMockBuilder(Redis::class)
             ->onlyMethods(['create', 'isExists'])
             ->getMock();
 
-        $store->expects(at(0))
+        $mockStore->expects(at(0))
             ->method('isExists')
             ->willReturn(false);
 
-        $store->expects(at(1))
+        $mockStore->expects(at(1))
             ->method('create')
             ->willReturn(new Content);
 
-        $content = new Content(null, null, $store);
+        $content = new Content(null, null, $mockStore);
         $create = $content->create([
             'content' => 'test content',
             'acl' => [
@@ -120,20 +121,19 @@ class ContentTest extends TestCase
      */
     public function testCreate()
     {
-        $store = $this->getMockBuilder(Redis::class)
-            ->disableOriginalConstructor()
+        $mockStore = $this->getMockBuilder(Redis::class)
             ->onlyMethods(['create', 'isExists'])
             ->getMock();
 
-        $store->expects(at(0))
+        $mockStore->expects(at(0))
             ->method('isExists')
             ->willReturn(false);
 
-        $store->expects(at(1))
+        $mockStore->expects(at(1))
             ->method('create')
             ->willReturn(new Content);
 
-        $content = new Content(null, null, $store);
+        $content = new Content(null, null, $mockStore);
         $create = $content->create([
             'content' => 'test content',
             'key' => 'test',
@@ -159,16 +159,15 @@ class ContentTest extends TestCase
      */
     public function testCreateIsExists()
     {
-        $store = $this->getMockBuilder(Redis::class)
-            ->disableOriginalConstructor()
+        $mockStore = $this->getMockBuilder(Redis::class)
             ->onlyMethods(['isExists'])
             ->getMock();
 
-        $store->expects(at(0))
+        $mockStore->expects(at(0))
             ->method('isExists')
             ->willReturn(true);
 
-        $content = new Content(null, null, $store);
+        $content = new Content(null, null, $mockStore);
 
         $this->expectException(DuplicateEntryException::class);
         $content->create([
@@ -178,5 +177,99 @@ class ContentTest extends TestCase
                 'owner' => '127.0.0.1',
             ],
         ]);
+    }
+
+    /**
+     * @return void
+     * @throws AccessDeniedException
+     * @throws EnvironmentIsBrokenException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     */
+    public function testRead()
+    {
+        Container::setClientIp('127.0.0.1');
+
+        $readContent = new Content(null, null, $this->getMockBuilder(Redis::class)->getMock());
+        $readContent->key = 'test_key';
+        $readContent->secret = 'test_secret';
+
+        $mockStore = $this->getMockBuilder(Redis::class)
+            ->onlyMethods(['read', 'decreaseDestroyCount'])
+            ->getMock();
+
+        $mockStore->expects(at(0))
+            ->method('read')
+            ->willReturnCallback(function ($content) {
+                $content->content = 'test content';
+                $content->attributes = [
+                    'size' => 12,
+                ];
+                $content->acl = [
+                    'owner' => '127.0.0.1',
+                ];
+                $content->ttl = 86400;
+                $content->expire_time = 1644603179;
+                $content->update_time = 1644516779;
+                $content->insert_time = 1644516779;
+                $content->destroy_count = -1;
+
+                return $content;
+            });
+
+        $mockStore->expects(at(1))
+            ->method('decreaseDestroyCount')
+            ->willReturn(false);
+
+        $content = new Content('test_key', 'test_secret', $mockStore);
+        $this->assertEquals(-1, $content->destroy_count);
+    }
+
+    /**
+     * @return void
+     * @throws AccessDeniedException
+     * @throws EnvironmentIsBrokenException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     */
+    public function testReadForRestrictedClient()
+    {
+        Container::setClientIp('127.0.0.3');
+
+        $readContent = new Content(null, null, $this->getMockBuilder(Redis::class)->getMock());
+        $readContent->key = 'test_key';
+        $readContent->secret = 'test_secret';
+
+        $mockStore = $this->getMockBuilder(Redis::class)
+            ->onlyMethods(['read'])
+            ->getMock();
+
+        $mockStore->expects(at(0))
+            ->method('read')
+            ->willReturnCallback(function ($content) {
+                $content->content = 'test content';
+                $content->attributes = [
+                    'size' => 12,
+                ];
+                $content->acl = [
+                    'deny' => [
+                        '127.0.0.3',
+                    ],
+                    'allow' => [
+                        '127.0.0.2',
+                    ],
+                    'owner' => '127.0.0.1',
+                ];
+                $content->ttl = 86400;
+                $content->expire_time = 1644603179;
+                $content->update_time = 1644516779;
+                $content->insert_time = 1644516779;
+                $content->destroy_count = -1;
+
+                return $content;
+            });
+
+        $this->expectException(AccessDeniedException::class);
+        new Content('test_key', 'test_secret', $mockStore);
     }
 }
