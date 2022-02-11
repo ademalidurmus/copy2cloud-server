@@ -72,6 +72,8 @@ class RedisTest extends TestCase
      */
     public function testRead()
     {
+        $time = time();
+
         $mockRedis = $this->getMockBuilder(Client::class)
             ->disableOriginalConstructor()
             ->addMethods(['hgetall', 'ttl'])
@@ -85,9 +87,9 @@ class RedisTest extends TestCase
                     'acl' => 'def50200db216bd35792900b66e80d8a643dea88ab52d8bac4e69ee8a4e55210e8dda0f26fb57e0ded413c04b31d9c0ce5e6b0fb6c65bb5a6b56d5b57f1259517b167ead26940f31eb387d7cdd29a83f5a87092d48e1aaac5288e71202c0ea9302fee24c56b48338bd1a3013f0123a563097bf513eec',
                     'attributes' => 'def502000bb9906f7735354dc9657ce144c5156fea2b8d6e26241b53432d320581f7b96412380e58e0596d2235e58e1fd28e95ce2a6c859503ba9857b94eabbd2c9af8f1401f28eea97c0618639fb8c18a1900e9467d8d86b060a128cd412188cbd40670acb54b260809',
                     'destroy_count' => 10,
-                    'expire_time' => 1644603179,
-                    'update_time' => 1644516779,
-                    'insert_time' => 1644516779,
+                    'expire_time' => $time + Limitations::DEFAULT_TTL,
+                    'update_time' => $time,
+                    'insert_time' => $time,
                 ]
             );
 
@@ -107,9 +109,9 @@ class RedisTest extends TestCase
         $this->assertEquals(['size' => 12], $read->attributes);
         $this->assertEquals(['owner' => '127.0.0.1'], $read->acl);
         $this->assertEquals(10, $read->destroy_count);
-        $this->assertEquals(1644603179, $read->expire_time);
-        $this->assertEquals(1644516779, $read->update_time);
-        $this->assertEquals(1644516779, $read->insert_time);
+        $this->assertEquals($time + Limitations::DEFAULT_TTL, $read->expire_time);
+        $this->assertEquals($time, $read->update_time);
+        $this->assertEquals($time, $read->insert_time);
     }
 
     /**
@@ -149,6 +151,8 @@ class RedisTest extends TestCase
      */
     public function testReadInvalidSecret()
     {
+        $time = time();
+
         $mockRedis = $this->getMockBuilder(Client::class)
             ->disableOriginalConstructor()
             ->addMethods(['hgetall', 'ttl'])
@@ -162,9 +166,9 @@ class RedisTest extends TestCase
                     'acl' => 'def50200db216bd35792900b66e80d8a643dea88ab52d8bac4e69ee8a4e55210e8dda0f26fb57e0ded413c04b31d9c0ce5e6b0fb6c65bb5a6b56d5b57f1259517b167ead26940f31eb387d7cdd29a83f5a87092d48e1aaac5288e71202c0ea9302fee24c56b48338bd1a3013f0123a563097bf513eec',
                     'attributes' => 'def502000bb9906f7735354dc9657ce144c5156fea2b8d6e26241b53432d320581f7b96412380e58e0596d2235e58e1fd28e95ce2a6c859503ba9857b94eabbd2c9af8f1401f28eea97c0618639fb8c18a1900e9467d8d86b060a128cd412188cbd40670acb54b260809',
                     'destroy_count' => 10,
-                    'expire_time' => 1644603179,
-                    'update_time' => 1644516779,
-                    'insert_time' => 1644516779,
+                    'expire_time' => $time + Limitations::DEFAULT_TTL,
+                    'update_time' => $time,
+                    'insert_time' => $time,
                 ]
             );
 
@@ -220,9 +224,9 @@ class RedisTest extends TestCase
             'owner' => '127.0.0.1',
         ];
         $content->ttl = 86400;
-        $content->expire_time = 1644603179;
-        $content->update_time = 1644516779;
-        $content->insert_time = 1644516779;
+        $content->expire_time = time() + Limitations::DEFAULT_TTL;
+        $content->update_time = time();
+        $content->insert_time = time();
         $content->destroy_count = 10;
 
         $store = new Redis($mockRedis);
@@ -263,9 +267,9 @@ class RedisTest extends TestCase
             'owner' => '127.0.0.1',
         ];
         $content->ttl = 86400;
-        $content->expire_time = 1644603179;
-        $content->update_time = 1644516779;
-        $content->insert_time = 1644516779;
+        $content->expire_time = time() + Limitations::DEFAULT_TTL;
+        $content->update_time = time();
+        $content->insert_time = time();
         $content->destroy_count = 10;
 
         $this->expectException(NotFoundException::class);

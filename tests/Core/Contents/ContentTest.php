@@ -76,6 +76,20 @@ class ContentTest extends TestCase
         $this->assertContains(CommonConstants::UPDATE, $scope);
     }
 
+    public function testGetClientScopeRead()
+    {
+        $content = new Content();
+        $content->acl = [];
+        $content->acl['allow'] = [
+            '1.1.1.2',
+        ];
+        $content->acl['owner'] = '1.1.1.1';
+
+        $scope = $content->getClientScope('1.1.1.3');
+        $this->assertIsArray($scope);
+        $this->assertEmpty($scope);
+    }
+
     /**
      * @return void
      * @throws AccessDeniedException
@@ -188,7 +202,7 @@ class ContentTest extends TestCase
      */
     public function testRead()
     {
-        Container::setClientIp('127.0.0.1');
+        Container::setClientIp('127.0.0.5');
 
         $readContent = new Content(null, null, $this->getMockBuilder(Redis::class)->getMock());
         $readContent->key = 'test_key';
@@ -208,10 +222,10 @@ class ContentTest extends TestCase
                 $content->acl = [
                     'owner' => '127.0.0.1',
                 ];
-                $content->ttl = 86400;
-                $content->expire_time = 1644603179;
-                $content->update_time = 1644516779;
-                $content->insert_time = 1644516779;
+                $content->ttl = Limitations::DEFAULT_TTL;
+                $content->expire_time = time() + Limitations::DEFAULT_TTL;
+                $content->update_time = time();
+                $content->insert_time = time();
                 $content->destroy_count = -1;
 
                 return $content;
@@ -234,7 +248,7 @@ class ContentTest extends TestCase
      */
     public function testReadForRestrictedClient()
     {
-        Container::setClientIp('127.0.0.3');
+        Container::setClientIp('127.0.0.5');
 
         $readContent = new Content(null, null, $this->getMockBuilder(Redis::class)->getMock());
         $readContent->key = 'test_key';
@@ -260,10 +274,10 @@ class ContentTest extends TestCase
                     ],
                     'owner' => '127.0.0.1',
                 ];
-                $content->ttl = 86400;
-                $content->expire_time = 1644603179;
-                $content->update_time = 1644516779;
-                $content->insert_time = 1644516779;
+                $content->ttl = Limitations::DEFAULT_TTL;
+                $content->expire_time = time() + Limitations::DEFAULT_TTL;
+                $content->update_time = time();
+                $content->insert_time = time();
                 $content->destroy_count = -1;
 
                 return $content;
@@ -271,5 +285,220 @@ class ContentTest extends TestCase
 
         $this->expectException(AccessDeniedException::class);
         new Content('test_key', 'test_secret', $mockStore);
+    }
+
+    /**
+     * @return void
+     * @throws AccessDeniedException
+     * @throws EnvironmentIsBrokenException
+     * @throws InvalidArgumentException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     */
+    public function testUpdate()
+    {
+        Container::setClientIp('127.0.0.1');
+
+        $mockStore = $this->getMockBuilder(Redis::class)
+            ->onlyMethods(['read', 'update'])
+            ->getMock();
+
+        $mockStore->expects(at(0))
+            ->method('read')
+            ->willReturnCallback(function ($content) {
+                $content->content = 'test content';
+                $content->attributes = [
+                    'size' => 12,
+                ];
+                $content->acl = [
+                    'deny' => [
+                        '127.0.0.3',
+                    ],
+                    'allow' => [
+                        '127.0.0.2',
+                    ],
+                    'owner' => '127.0.0.1',
+                ];
+                $content->ttl = Limitations::DEFAULT_TTL;
+                $content->expire_time = time() + Limitations::DEFAULT_TTL;
+                $content->update_time = time();
+                $content->insert_time = time();
+                $content->destroy_count = -1;
+
+                return $content;
+            });
+
+        $mockStore->expects(at(1))
+            ->method('update')
+            ->willReturn(new Content);
+
+        $content = new Content('test', 'test_secret', $mockStore);
+        $update = $content->update([
+            'content' => 'test content updated',
+            'key' => 'test',
+            'secret' => 'test_secret',
+            'acl' => [
+                'owner' => '127.0.0.1',
+            ],
+        ]);
+        $this->assertInstanceOf(Content::class, $update);
+        $this->assertIsInt($update->ttl);
+        $this->assertEquals(20, $update->attributes['size']);
+        $this->assertEquals(-1, $update->destroy_count);
+    }
+
+    /**
+     * @return void
+     * @throws AccessDeniedException
+     * @throws EnvironmentIsBrokenException
+     * @throws InvalidArgumentException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     */
+    public function testUpdateForRestrictedClient()
+    {
+        Container::setClientIp('127.0.0.2');
+
+        $mockStore = $this->getMockBuilder(Redis::class)
+            ->onlyMethods(['read'])
+            ->getMock();
+
+        $mockStore->expects(at(0))
+            ->method('read')
+            ->willReturnCallback(function ($content) {
+                $content->content = 'test content';
+                $content->attributes = [
+                    'size' => 12,
+                ];
+                $content->acl = [
+                    'deny' => [
+                        '127.0.0.3',
+                    ],
+                    'allow' => [
+                        '127.0.0.2',
+                    ],
+                    'owner' => '127.0.0.1',
+                ];
+                $content->ttl = Limitations::DEFAULT_TTL;
+                $content->expire_time = time() + Limitations::DEFAULT_TTL;
+                $content->update_time = time();
+                $content->insert_time = time();
+                $content->destroy_count = -1;
+
+                return $content;
+            });
+
+        $this->expectException(AccessDeniedException::class);
+        $content = new Content('test', 'test_secret', $mockStore);
+        $content->update([
+            'content' => 'test content updated',
+        ]);
+    }
+
+    /**
+     * @return void
+     * @throws AccessDeniedException
+     * @throws EnvironmentIsBrokenException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     *
+     * @todo fix given object __destruct problem
+     */
+    public function testDelete()
+    {
+        Container::setClientIp('127.0.0.1');
+
+        $mockStore = $this->getMockBuilder(Redis::class)
+            ->onlyMethods(['read', 'delete'])
+            ->getMock();
+
+        $mockStore->expects(at(0))
+            ->method('read')
+            ->willReturnCallback(function ($content) {
+                $content->content = 'test content';
+                $content->attributes = [
+                    'size' => 12,
+                ];
+                $content->acl = [
+                    'owner' => '127.0.0.1',
+                ];
+                $content->ttl = Limitations::DEFAULT_TTL;
+                $content->expire_time = time() + Limitations::DEFAULT_TTL;
+                $content->update_time = time();
+                $content->insert_time = time();
+                $content->destroy_count = -1;
+
+                return $content;
+            });
+
+        $mockStore->expects(at(1))
+            ->method('delete')
+            ->willReturnCallback(function ($content) {
+                $fields = [
+                    'key',
+                    'content',
+                    'acl',
+                    'attributes',
+                    'destroy_count',
+                    'ttl',
+                    'insert_time',
+                    'update_time',
+                    'expire_time',
+                    'secret',
+                ];
+                foreach ($fields as $field) {
+                    unset($content->{$field});
+                }
+                return $content;
+            })
+            ->willReturn(true);
+
+        $content = new Content('test', 'test_secret', $mockStore);
+        $delete = $content->delete();
+
+        $this->assertInstanceOf(Content::class, $delete);
+        // $this->assertNull($delete->key);
+    }
+
+    /**
+     * @return void
+     * @throws AccessDeniedException
+     * @throws EnvironmentIsBrokenException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     */
+    public function testDeleteForRestrictedClient()
+    {
+        Container::setClientIp('127.0.0.2');
+
+        $mockStore = $this->getMockBuilder(Redis::class)
+            ->onlyMethods(['read'])
+            ->getMock();
+
+        $mockStore->expects(at(0))
+            ->method('read')
+            ->willReturnCallback(function ($content) {
+                $content->content = 'test content';
+                $content->attributes = [
+                    'size' => 12,
+                ];
+                $content->acl = [
+                    'allow' => [
+                        '127.0.0.2',
+                    ],
+                    'owner' => '127.0.0.1',
+                ];
+                $content->ttl = Limitations::DEFAULT_TTL;
+                $content->expire_time = time() + Limitations::DEFAULT_TTL;
+                $content->update_time = time();
+                $content->insert_time = time();
+                $content->destroy_count = -1;
+
+                return $content;
+            });
+
+        $this->expectException(AccessDeniedException::class);
+        $content = new Content('test', 'test_secret', $mockStore);
+        $content->delete();
     }
 }

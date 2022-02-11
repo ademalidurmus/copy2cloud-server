@@ -126,7 +126,15 @@ class Redis extends StoreRedisAbstract implements StoreInterface
      */
     public function delete(Content $content): bool
     {
-        return $this->connection->del($this->getHash($content->key)) > 0;
+        $response = $this->connection->del($this->getHash($content->key)) > 0;
+
+        if ($response) {
+            foreach ($content->getReadFields() as $field) {
+                unset($content->{$field});
+            }
+        }
+
+        return $response;
     }
 
     /**

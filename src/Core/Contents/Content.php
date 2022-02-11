@@ -129,7 +129,13 @@ class Content extends PropertyAccessor
     {
         $this->store->read($this);
 
-        if (!v::in($this->getClientScope())->validate(CommonConstants::READ)) {
+        if (
+            (
+                v::key('allow', v::notEmpty())->validate($this->acl)
+                || v::key('deny', v::notEmpty())->validate($this->acl)
+            )
+            && !v::in($this->getClientScope())->validate(CommonConstants::READ)
+        ) {
             throw new AccessDeniedException(
                 'Cannot access this content',
                 ErrorCodes::CONTENT_ACCESS_DENIED_TO_MODIFY
