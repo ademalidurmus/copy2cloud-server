@@ -1,19 +1,22 @@
 language: php
 
 php:
-  - '8.1.0'
+- 8.1.0
+
+install:
+- travis_retry composer install --no-interaction --no-suggest
+
+script:
+- composer test -- --coverage-clover=coverage.xml
+
+after_success:
+- bash <(curl -s https://codecov.io/bash)
 
 branches:
   only:
-    master
-    
+  - master
+  - develop
+
 cache:
- directories:
-   - $HOME/.composer/cache/files
-
-before_script:
- - composer self-update
- - composer install --prefer-source --no-interaction --dev
-
-script:
-    - vendor/bin/phpunit --coverage-clover coverage.xml
+  directories:
+  - $HOME/.composer/cache
