@@ -12,6 +12,7 @@ use Copy2Cloud\Base\Exceptions\InvalidArgumentException;
 use Copy2Cloud\Base\Exceptions\NotFoundException;
 use Copy2Cloud\Base\Exceptions\UnexpectedValueException;
 use Copy2Cloud\Base\Utilities\Container;
+use Copy2Cloud\Base\Utilities\Str;
 use Copy2Cloud\Core\Contents\Content;
 use Copy2Cloud\Core\Contents\Store\Redis;
 use Defuse\Crypto\Exception\EnvironmentIsBrokenException;
@@ -154,12 +155,14 @@ class ContentTest extends TestCase
             'secret' => 'test_secret',
             'acl' => [
                 'owner' => '127.0.0.1',
+                'test_key' => 'test value'
             ],
         ]);
         $this->assertInstanceOf(Content::class, $create);
         $this->assertIsInt($create->ttl);
         $this->assertEquals(12, $create->attributes['size']);
         $this->assertEquals(-1, $create->destroy_count);
+        $this->assertNull($create->acl['test_key'] ?? null);
     }
 
     /**
@@ -500,5 +503,180 @@ class ContentTest extends TestCase
         $this->expectException(AccessDeniedException::class);
         $content = new Content('test', 'test_secret', $mockStore);
         $content->delete();
+    }
+
+    /**
+     * @return void
+     * @throws AccessDeniedException
+     * @throws EnvironmentIsBrokenException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     */
+    public function testCheckValueInvalidArgumentInvalidArgumentError()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $content = new Content(null, null, $this->getMockBuilder(Redis::class)->getMock());
+        $content->testInvalidKey = '';
+    }
+
+    /**
+     * @return void
+     * @throws AccessDeniedException
+     * @throws DuplicateEntryException
+     * @throws EnvironmentIsBrokenException
+     * @throws InvalidArgumentException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     */
+    public function testCheckValueKeyAlphanumericError()
+    {
+        $this->expectException(UnexpectedValueException::class);
+        $content = new Content(null, null, $this->getMockBuilder(Redis::class)->getMock());
+        $content->create(
+            [
+                'key' => 'test key with space',
+            ]
+        );
+    }
+
+    /**
+     * @return void
+     * @throws AccessDeniedException
+     * @throws DuplicateEntryException
+     * @throws EnvironmentIsBrokenException
+     * @throws InvalidArgumentException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     */
+    public function testCheckValueKeyLengthError()
+    {
+        $this->expectException(UnexpectedValueException::class);
+        $content = new Content(null, null, $this->getMockBuilder(Redis::class)->getMock());
+        $content->create(
+            [
+                'key' => Str::generateRandomStr(Limitations::KEY_MAX_LENGTH + 1),
+            ]
+        );
+    }
+
+    /**
+     * @return void
+     * @throws AccessDeniedException
+     * @throws EnvironmentIsBrokenException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     */
+    public function testCheckValueContentVariableTypeError()
+    {
+        $this->expectException(UnexpectedValueException::class);
+        $content = new Content(null, null, $this->getMockBuilder(Redis::class)->getMock());
+        $content->content = [];
+    }
+
+    /**
+     * @return void
+     * @throws AccessDeniedException
+     * @throws EnvironmentIsBrokenException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     *
+     * @todo mock content generate operation need performance improvement
+     */
+    public function testCheckValueContentLengthError()
+    {
+        $this->expectException(UnexpectedValueException::class);
+        $content = new Content(null, null, $this->getMockBuilder(Redis::class)->getMock());
+        $content->content = Str::generateRandomStr(Limitations::CONTENT_MAX_LENGTH + 1);
+    }
+
+    /**
+     * @return void
+     * @throws AccessDeniedException
+     * @throws EnvironmentIsBrokenException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     */
+    public function testCheckValueExpireTimeError()
+    {
+        $this->expectException(UnexpectedValueException::class);
+        $content = new Content(null, null, $this->getMockBuilder(Redis::class)->getMock());
+        $content->expire_time = time() - 100;
+    }
+
+    /**
+     * @return void
+     * @throws AccessDeniedException
+     * @throws EnvironmentIsBrokenException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     */
+    public function testCheckValueTtlError()
+    {
+        $this->expectException(UnexpectedValueException::class);
+        $content = new Content(null, null, $this->getMockBuilder(Redis::class)->getMock());
+        $content->ttl = Limitations::MAX_TTL + 1;
+    }
+
+    /**
+     * @return void
+     * @throws AccessDeniedException
+     * @throws EnvironmentIsBrokenException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     */
+    public function testCheckValueDestroyCountError()
+    {
+        $this->expectException(UnexpectedValueException::class);
+        $content = new Content(null, null, $this->getMockBuilder(Redis::class)->getMock());
+        $content->destroy_count = 0;
+    }
+
+    /**
+     * @return void
+     * @throws AccessDeniedException
+     * @throws EnvironmentIsBrokenException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     */
+    public function testCheckValueAclAllowError()
+    {
+        $this->expectException(UnexpectedValueException::class);
+        $content = new Content(null, null, $this->getMockBuilder(Redis::class)->getMock());
+        $content->acl = [
+            'allow' => ['invalid.ip.address'],
+        ];
+    }
+
+    /**
+     * @return void
+     * @throws AccessDeniedException
+     * @throws EnvironmentIsBrokenException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     */
+    public function testCheckValueAclDenyError()
+    {
+        $this->expectException(UnexpectedValueException::class);
+        $content = new Content(null, null, $this->getMockBuilder(Redis::class)->getMock());
+        $content->acl = [
+            'deny' => ['invalid.ip.address'],
+        ];
+    }
+
+    /**
+     * @return void
+     * @throws AccessDeniedException
+     * @throws EnvironmentIsBrokenException
+     * @throws NotFoundException
+     * @throws UnexpectedValueException
+     */
+    public function testCheckValueAclOwnerError()
+    {
+        $this->expectException(UnexpectedValueException::class);
+        $content = new Content(null, null, $this->getMockBuilder(Redis::class)->getMock());
+        $content->acl = [
+            'deny' => ['127.0.0.1'],
+            'owner' => '127.0.0.1',
+        ];
     }
 }
