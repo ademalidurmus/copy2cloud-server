@@ -7,10 +7,13 @@ namespace Copy2Cloud\Tests;
 use Copy2Cloud\App;
 use Copy2Cloud\Base\Exceptions\InvalidArgumentException;
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
+use Copy2Cloud\Base\Exceptions\ServiceUnavailableException;
 use Copy2Cloud\Base\Utilities\Config;
 use Copy2Cloud\Base\Utilities\Container;
+use Copy2Cloud\Base\Utilities\Log;
 use PHPUnit\Framework\TestCase;
 use Predis\Client;
+use function PHPUnit\Framework\at;
 
 final class AppTest extends TestCase
 {
@@ -107,5 +110,32 @@ final class AppTest extends TestCase
         $this->expectOutputString('');
         $app = new App();
         $app->register('TEST');
+    }
+
+    /**
+     * @return void
+     * @throws MaintenanceModeException
+     */
+    public function testRunError()
+    {
+        try {
+            $mockLog = $this->getMockBuilder(Log::class)
+                ->onlyMethods(['isDebugEnabled'])
+                ->getMock();
+
+            $mockLog->expects(at(0))
+                ->method('isDebugEnabled')
+                ->willThrowException(
+                    new ServiceUnavailableException('Sample exception!')
+                );
+
+            Container::set(Container::RESOURCE_LOG, $mockLog);
+
+            $this->expectOutputRegex('/\[(?P<date>.*)\]\s(?<channel>.*)\.(?<severity>.*):\s(?<message>.*)\s(\[|\{)(?<context>.*)(\]|\})\s\[(?<extra>.*)\]/');
+            $app = new App();
+            $app->run();
+        } finally {
+            Container::clean(Container::RESOURCE_LOG);
+        }
     }
 }
