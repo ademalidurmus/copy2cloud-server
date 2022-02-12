@@ -1,3 +1,5 @@
+env:
+	@cp .env.dist .env
 build:
 	@docker-compose up -d --build
 up:
@@ -19,4 +21,5 @@ test:
 # 	@docker exec -it "copy2cloud-php" /bin/bash  -c "./vendor/bin/phpunit"
 update:
 	@docker exec -it "copy2cloud-php" /bin/bash  -c "composer update -vvv"
-
+clean:
+	@rm .env
