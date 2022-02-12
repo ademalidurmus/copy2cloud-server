@@ -11,6 +11,27 @@ copy2cloud-server is a universal clipboard service.
 
 API documentation available at [Postman Public Directory](https://documenter.getpostman.com/view/5001481/UVeMJj4S)
 
+## Installation
+
+Download and run project with following commands.
+
+```sh
+# download project
+git clone https://github.com/ademalidurmus/copy2cloud-server.git
+
+# go to project folder
+cd copy2cloud-server
+
+# copy environment file from .env.dist (you can create own .env file or modify created file)
+make env
+
+# build project
+make build
+
+# check application status on your browser, httpie or REST API client
+http localhost:1453/v1/ping
+```
+
 ## License
 
 MIT © [Adem Ali Durmuş](https://github.com/ademalidurmus)
