@@ -1,8 +1,12 @@
 {
   "name": "copy2cloud/server",
-  "description": "copy2cloud server",
+  "description": "copy2cloud-server is a universal clipboard service.",
+  "keywords": [
+    "clipboard",
+    "redis"
+  ],
   "minimum-stability": "stable",
-  "license": "proprietary",
+  "license": "MIT",
   "authors": [
     {
       "name": "Adem Ali Durmus",
