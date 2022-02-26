@@ -4,6 +4,7 @@ services:
     image: 'redis:alpine'
     container_name: copy2cloud-redis
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    restart: always
     networks:
       - copy2cloud
     ports:
@@ -13,6 +14,7 @@ services:
     image: 'nginx:alpine'
     container_name: copy2cloud-webserver
     working_dir: /copy2cloud
+    restart: always
     networks:
       - copy2cloud
     volumes:
@@ -25,6 +27,7 @@ services:
     build: .docker/php-fpm
     container_name: copy2cloud-php
     working_dir: /copy2cloud
+    restart: always
     networks:
       - copy2cloud
     volumes:
