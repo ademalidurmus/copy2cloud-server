@@ -1,15 +1,15 @@
 env:
 	@cp .env.dist .env
 build:
-	@docker-compose up -d --build
+	@docker compose up -d --build
 up:
-	@docker-compose up -d
+	@docker compose up -d
 down:
-	@docker-compose down
+	@docker compose down
 restart:
-	@docker-compose restart
+	@docker compose restart
 ps:
-	@docker-compose ps
+	@docker compose ps
 php:
 	@docker exec -it "copy2cloud-php" /bin/bash
 webserver:

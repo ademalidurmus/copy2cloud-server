@@ -18,7 +18,7 @@ class HttpErrorHandler extends ErrorHandler
     /**
      * @var DefaultException
      */
-    protected $exception;
+    protected \Throwable $exception;
 
     /**
      * @return ResponseInterface
