@@ -8,6 +8,7 @@ use Copy2Cloud\Base\Constants\CommonConstants;
 use Copy2Cloud\Base\Exceptions\MaintenanceModeException;
 use Copy2Cloud\Base\Exceptions\UnexpectedValueException;
 use Monolog\Handler\StreamHandler;
+use Monolog\Handler\RotatingFileHandler;
 use Monolog\Logger;
 use Respect\Validation\Validator as v;
 use Throwable;
@@ -34,9 +35,11 @@ class Log extends Logger
 
         parent::__construct(defined('APP_NAME') ? APP_NAME : 'copy2cloud');
 
-        $streamHandler = new StreamHandler($this->_getStorePath(), $this->_getLevel());
+        // $streamHandler = new StreamHandler($this->_getStorePath(), $this->_getLevel());
+        // $this->pushHandler($streamHandler);
 
-        $this->pushHandler($streamHandler);
+        $rotatingFileHandler = new RotatingFileHandler($this->_getStorePath(), 0, $this->_getLevel(), true, 0664);
+        $this->pushHandler($rotatingFileHandler);
 
         $this->pushProcessor(function ($record) {
             $record['context']['extra']['transaction_id'] = Container::getTransactionId();
