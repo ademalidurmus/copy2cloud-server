@@ -19,7 +19,6 @@ try {
     $app = new App();
     $app->run();
 } catch (Throwable $th) {
-    echo $th->getMessage();
     error_log('Application could not run! Error: ' . $th->getMessage());
     header('HTTP/1.1 500 Internal Server Error');
 }

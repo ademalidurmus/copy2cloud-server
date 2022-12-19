@@ -35,11 +35,11 @@ class Log extends Logger
 
         parent::__construct(defined('APP_NAME') ? APP_NAME : 'copy2cloud');
 
-        // $streamHandler = new StreamHandler($this->_getStorePath(), $this->_getLevel());
-        // $this->pushHandler($streamHandler);
+        $streamHandler = new StreamHandler($this->_getStorePath(), $this->_getLevel());
+        $this->pushHandler($streamHandler);
 
-        $rotatingFileHandler = new RotatingFileHandler($this->_getStorePath(), 0, $this->_getLevel(), true, 0664);
-        $this->pushHandler($rotatingFileHandler);
+        // $rotatingFileHandler = new RotatingFileHandler($this->_getStorePath(), 0, $this->_getLevel(), true, 0664);
+        // $this->pushHandler($rotatingFileHandler);
 
         $this->pushProcessor(function ($record) {
             $record['context']['extra']['transaction_id'] = Container::getTransactionId();
