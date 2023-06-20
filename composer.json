@@ -1,6 +1,6 @@
 {
   "name": "copy2cloud/server",
-  "description": "copy2cloud-server is a universal clipboard service.",
+  "description": "copy2cloud-server is a internet clipboard service.",
   "keywords": [
     "clipboard",
     "redis"
